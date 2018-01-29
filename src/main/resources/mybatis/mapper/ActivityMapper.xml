@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bus.chelaile.dao.ActivityMapper" >
+    
+    
+    <!-- 所有活动 -->
+    <select id="listValidActivities" resultType="com.bus.chelaile.model.Answer_activity">
+        SELECT activityId ,activityName ,startTime ,totalBonus ,robotMultiple ,createTime ,updateTime ,operate ,status 
+        FROM answer_activity
+
+    </select>
+    
+       
+</mapper>

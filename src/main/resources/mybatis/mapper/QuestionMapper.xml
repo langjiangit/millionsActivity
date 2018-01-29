@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.bus.chelaile.dao.QuestionMapper" >
+    
+    
+    <!-- 所有题目 -->
+    <select id="listValidQuestions" resultType="com.bus.chelaile.model.Answer_subject">
+        SELECT  id ,activityId ,orderNo ,subject ,`option` ,answer ,level ,status ,updataTime 
+        FROM answer_subject
+        
+    </select>
+    
+       
+</mapper>
