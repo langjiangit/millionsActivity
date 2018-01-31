@@ -37,10 +37,13 @@ public class PushAnswerLogThread implements Runnable {
 		}
 
 		AnswerLog answerLog = new AnswerLog(param);
-		String key = QuestionCache.getAnswerLogListKey(param.getSubjectId());
-		System.out.println("key=" + key + ", 试卷内容：" + JSONObject.toJSONString(answerLog));
-			
-		CacheUtil.lPush(key, JSONObject.toJSONString(answerLog));
+		String subJectkey = QuestionCache.getAnswerLogListKey(param.getSubjectId());
+		String field = QuestionCache.getAnswerLogListField(param.getAccountId());
+		System.out.println("key=" + subJectkey + ", 试卷内容：" + JSONObject.toJSONString(answerLog));
+		
+		logger.info("key={},field={},answerLog={}", subJectkey, field, JSONObject.toJSONString(answerLog));	
+		CacheUtil.setHashSetValue(subJectkey, field, JSONObject.toJSONString(answerLog));
+//		CacheUtil.lPush(key, JSONObject.toJSONString(answerLog));
 	}
 
 }

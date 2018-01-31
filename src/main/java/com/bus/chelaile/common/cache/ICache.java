@@ -19,7 +19,7 @@ public interface ICache {
 	 public long IncValue(String key, int exp);
 	 
 	 //
-	 public void incrBy(String key, int incNumber, int exp);
+	 public long incrBy(String key, int incNumber, int exp);
 
 	 // 从redis直接获取set
 	 public Set<String> getSet(String key);
@@ -36,4 +36,10 @@ public interface ICache {
 	 public void setSortedSet(String key, double score,String value, int expire);
 	 public Set<String> zrangeByScore(String key, double startScore, double endScore, int count);
 	 public Set<String> zrevRangeByScore(String key, double endScore, double startScore, int count);
+
+	public Long setHashSetValue(String key, String field, String value);
+
+	public String getHashSetValue(String key, String field);
+
+	public Map<String, String> getHsetAll(String key);
 }

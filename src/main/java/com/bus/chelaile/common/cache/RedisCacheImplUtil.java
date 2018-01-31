@@ -664,6 +664,30 @@ public class RedisCacheImplUtil implements ICache {
 
 		return ret;
 	}
+	
+	public Map<String, String> getHsetAll(String key) {
+		JedisPool pool = null;
+		Jedis conn = null;
+		Map<String, String> result = null;
+		try {
+			pool = getPool();
+			conn = pool.getResource();
+			result = conn.hgetAll(key);
+
+			log.debug("Redis-Hget: Key={}, value={}", key, result);
+		} catch (Exception e) {
+			log.error("Error occur in Redis.Hget, key={}, error message: {}", key, e.getMessage());
+			if (pool != null && conn != null) {
+				pool.returnResource(conn);
+				pool = null;
+				conn = null;
+			}
+		} finally {
+			if (pool != null && conn != null)
+				pool.returnResource(conn);
+		}
+		return result;
+	}
 
 	public String getHashSetValue(String key, String field) {
 		JedisPool pool = null;
@@ -751,13 +775,14 @@ public class RedisCacheImplUtil implements ICache {
 	 * 增加指定数目
 	 */
 	@Override
-	public void incrBy(String key, int incNumber, int exp) {
+	public long incrBy(String key, int incNumber, int exp) {
 		JedisPool pool = null;
 		Jedis conn = null;
+		long result = 0L;
 		try {
 			pool = getPool();
 			conn = pool.getResource();
-			conn.incrBy(key, incNumber);
+			result = conn.incrBy(key, incNumber);
 			if (exp != -1)
 				conn.expire(key, exp);
 		} catch (Exception e) {
@@ -771,7 +796,7 @@ public class RedisCacheImplUtil implements ICache {
 			if (pool != null && conn != null)
 				pool.returnResource(conn);
 		}
-
+		return result;
 	}
 
 	@Override

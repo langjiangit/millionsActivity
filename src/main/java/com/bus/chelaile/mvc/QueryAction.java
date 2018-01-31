@@ -23,8 +23,35 @@ public class QueryAction extends AbstractController {
 	private ServiceManager serviceManager;
 	@Resource
 	private PublishDataService publishDataService;
-
 	private static final Logger logger = LoggerFactory.getLogger(QueryAction.class);
+
+	/*
+	 * 查询活动信息
+	 */
+	@ResponseBody
+	@RequestMapping(value = "homepage.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String homepage(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws Exception {
+
+		QuestionParam param = getActionParam(request);
+		logger.info("活动首页，查询相关信息, accountId={}, ", param.getAccountId());
+
+		return serviceManager.queryHomeInfo(param);
+	}
+
+	/*
+	 * 房间初始化、查询房间信息
+	 */
+	@ResponseBody
+	@RequestMapping(value = "romeInit.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String romeInit(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws Exception {
+
+		QuestionParam param = getActionParam(request);
+		logger.info("房间初始化，查询相关信息, accountId={}, ", param.getAccountId());
+
+		return serviceManager.queryRoomInfo(param);
+	}
 
 	/*
 	 * 查询答题结果，用户的生死
@@ -58,14 +85,17 @@ public class QueryAction extends AbstractController {
 			logger.info("公布答案, subjectId={}, type={}", param.getSubjectId(), param.getType());
 			return serviceManager.SendAnswer(param);
 		} else if (param.getType() == 2) {
-			logger.info("主持人说话, subjectId={}, type={}", param.getSubjectId(), param.getType());
+			logger.info("主持人说话, type={}", param.getType());
 			return publishDataService.sendEmceeMsg(getInt(request, "msgType"), param.getContent());
 		} else if (param.getType() == 3) {
-			logger.info("开始计时, subjectId={}, type={}", param.getSubjectId(), param.getType());
+			logger.info("开始计时, type={}", param.getType());
 			return publishDataService.sendBeginMsg();
 		} else if (param.getType() == 4) {
-			logger.info("公布获奖结果, subjectId={}, type={}", param.getSubjectId(), param.getType());
-			return publishDataService.sendResult();
+			logger.info("公布获奖结果, type={}", param.getType());
+			return publishDataService.sendResult(param);
+		} else if (param.getType() == 5) {
+			logger.info("聊天室消息, type={}", param.getType());
+			return publishDataService.sendChatMsg(param.getNickName(), param.getContent());
 		} else {
 			logger.info("未知类型的type， type={}", param.getType());
 			return "";
@@ -98,23 +128,32 @@ public class QueryAction extends AbstractController {
 			throws Exception {
 
 		QuestionParam param = getActionParam(request);
-		logger.info("查询答题总数据, activityId={}, subjectId={}", param.getActivityId(), param.getSubjectId());
+		logger.info("查询答题总数据, activityId={}", param.getActivityId());
 
 		return serviceManager.queryQuestionData(param);
 	}
 
 	/*
-	 * 查询房间信息
+	 * 调整数据，运营平台使用
 	 */
 	@ResponseBody
-	@RequestMapping(value = "romeInit.action", produces = "Content-Type=text/plain;charset=UTF-8")
-	public String romeInit(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+	@RequestMapping(value = "changeNum.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String changeNum(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws Exception {
 
-		QuestionParam param = getActionParam(request);
-		logger.info("房间初始化，查询相关信息, accountId={}, ", param.getAccountId());
+		int index = getInt(request, "index");
+		int activityId = getInt(request, "activityId");
+		int watchingRobot = getInt(request, "watchingRobot");
+		int option1Robot = getInt(request, "option1Robot");
+		int option2Robot = getInt(request, "option2Robot");
+		int option3Robot = getInt(request, "option3Robot");
+		int notAnsRobot = getInt(request, "notAnsRobot");
+		int reLivingRobot = getInt(request, "reLivingRobot");
 
-		return serviceManager.queryRoomInfo(param);
+		logger.info("调整答题总数据, activityId={}", activityId);
+
+		return serviceManager.changeRobotNum(index, activityId, watchingRobot, option1Robot, option2Robot,
+				option3Robot, notAnsRobot, reLivingRobot);
 	}
 
 	/*

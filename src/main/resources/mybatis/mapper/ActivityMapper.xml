@@ -6,8 +6,8 @@
     <!-- 所有活动 -->
     <select id="listValidActivities" resultType="com.bus.chelaile.model.Answer_activity">
         SELECT activityId ,activityName ,startTime ,totalBonus ,robotMultiple ,createTime ,updateTime ,operate ,status 
-        FROM answer_activity
-
+        FROM answer_activity 
+		WHERE status != 4 and status != 3 
     </select>
     
        

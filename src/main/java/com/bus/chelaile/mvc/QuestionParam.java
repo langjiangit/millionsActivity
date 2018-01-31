@@ -17,6 +17,7 @@ public class QuestionParam {
 	private int type; // 0 位发题、1 为发答案、2 主持人说话、3 开始计时、4 公布获奖结果
 	private int msgType; // 信息类型， 0 文字，1 图片
 	private String content; // 发送的内容
+	private String nickName; // 聊天室，说话人的昵称
 	
 	public String getAccountId() {
 		return accountId;
@@ -41,7 +42,6 @@ public class QuestionParam {
 	public void setSecret(String secret) {
 		this.secret = secret;
 	}
-
 
 	public int getActivityId() {
 		return activityId;
@@ -113,6 +113,14 @@ public class QuestionParam {
 
 	public void setContent(String content) {
 		this.content = content;
+	}
+
+	public String getNickName() {
+		return nickName;
+	}
+
+	public void setNickName(String nickName) {
+		this.nickName = nickName;
 	}
 	
 }

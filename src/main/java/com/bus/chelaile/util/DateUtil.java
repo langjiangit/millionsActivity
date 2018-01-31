@@ -3,8 +3,9 @@ package com.bus.chelaile.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-
+import java.util.Calendar;
 import java.util.Date;
+import java.util.UUID;
 
 
 public class DateUtil {
@@ -112,4 +113,44 @@ public class DateUtil {
 		}
     	return new Date();
     }
+    
+	public static String getDescDate(String dateStr) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		Calendar calendarInstance = Calendar.getInstance();
+		calendarInstance.setTime(new Date());
+		
+		String todayStr = sdf.format(calendarInstance.getTime());
+		calendarInstance.add(Calendar.DATE, 1);
+		String tomorrowStr = sdf.format(calendarInstance.getTime());
+		
+		if(todayStr.equals(dateStr)) {
+			return "今天";
+		} else if (tomorrowStr.equals(dateStr)) {
+			return "明天";
+		}
+		
+		return dateStr;
+	}
+	
+	/*
+	 * 是否在开播前5分钟
+	 */
+	public static boolean isbefore5min(String dateStr) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		Calendar calendarInstance = Calendar.getInstance();
+		calendarInstance.setTime(new Date());
+		calendarInstance.add(Calendar.MINUTE, 5);	// 当前时间 + 5min
+		
+		String after5Min = sdf.format(calendarInstance.getTime());
+		
+		return after5Min.compareTo(dateStr) >= 0;
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(UUID.randomUUID());
+		
+		System.out.println(getDescDate("2018-01-30"));
+		System.out.println(getDescDate("2018-01-31"));
+		System.out.println(getDescDate("2018-02-01"));
+	}
 }

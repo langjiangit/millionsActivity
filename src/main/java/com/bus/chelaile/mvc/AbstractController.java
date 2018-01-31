@@ -21,6 +21,7 @@ public class AbstractController {
 		param.setType(getInt(request, "type"));
 		param.setMsgType(getInt(request, "msgType"));
 		param.setContent(request.getParameter("content"));
+		param.setNickName(request.getParameter("nickName"));
 		
 		return param;
 	}

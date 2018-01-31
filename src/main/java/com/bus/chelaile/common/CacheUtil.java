@@ -38,6 +38,8 @@ public class CacheUtil {
 			"ocs.username");
 	private static final String PROP_OCS_PASSWORD = PropertiesUtils.getValue(PropertiesName.CACHE.getValue(),
 			"ocs.password");
+	private static final String PUBMSG_CLIENT_COUNT = PropertiesUtils.getValue(PropertiesName.CACHE.getValue(),
+			"pubmsg.client_count", "pubmsg#client-count");
 
 	public static void initClient() {
 
@@ -99,8 +101,8 @@ public class CacheUtil {
 		return redisClient.getByList(list);
 	}
 
-	public static void redisIncrBy(String key, int number, int exp) {
-		redisClient.incrBy(key, number, exp);
+	public static long redisIncrBy(String key, int number, int exp) {
+		return redisClient.incrBy(key, number, exp);
 	}
 
 	// redis 有序集合 3个方法
@@ -118,6 +120,25 @@ public class CacheUtil {
 
 	public static Long publish(String channel, String message) {
 		return redisPush.publish(channel, message);
+	}
+	
+	/*
+	 * 获取 连接数（既在线人数）
+	 */
+	public static Object getPubClientNumber() {
+		return redisPush.get(PUBMSG_CLIENT_COUNT);
+	}
+	
+	public static Long setHashSetValue(String key, String field, String value) {
+		return redisClient.setHashSetValue(key, field, value);
+	}
+	
+	public static String getHashSetValue(String key, String field) {
+		return redisClient.getHashSetValue(key, field);
+	}
+	
+	public static Map<String, String> getHsetAll(String key) {
+		return  redisClient.getHsetAll(key);
 	}
 
 	public static void lPush(String key, String value) {

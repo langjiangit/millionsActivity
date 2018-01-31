@@ -22,6 +22,8 @@ import com.bus.chelaile.util.config.PropertiesUtils;
 
 
 
+
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -171,7 +173,8 @@ public class OCSCacheUtil implements ICache{
 	}
 
 	@Override
-	public void incrBy(String key, int incNumber, int exp) {
+	public long incrBy(String key, int incNumber, int exp) {
+		return 0L;
 	}
 
 	@Override
@@ -208,6 +211,24 @@ public class OCSCacheUtil implements ICache{
 	@Override
 	public String lpop(String key) {
 		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Long setHashSetValue(String key, String field, String value) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getHashSetValue(String key, String field) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Map<String, String> getHsetAll(String key) {
+		logger.error("use wrong cache  !!!");
 		return null;
 	}
 }

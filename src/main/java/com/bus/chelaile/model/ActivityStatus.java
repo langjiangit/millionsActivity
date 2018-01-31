@@ -1,5 +1,7 @@
 package com.bus.chelaile.model;
 
+import com.alibaba.fastjson.JSONObject;
+
 /**
  * 活动进行到哪个阶段了
  * @author quekunkun
@@ -42,8 +44,8 @@ public class ActivityStatus {
 	/*
 	 * 是否还未开始第一道答题
 	 */
-	public boolean isNotBegin() {
-		return (this.questionN == 0) && (this.questionS == -1);
+	public boolean gameNotBegin() {
+		return (this.questionN == -1 || this.questionN == 0) && (this.questionS == -1);
 	}
 
 	/*
@@ -53,7 +55,21 @@ public class ActivityStatus {
 		return(this.questionS == 1);
 	}
 	
+	/*
+	 * 数据计算完毕状态，可以供运营调整
+	 */
 	public boolean hasCalculated() {
 		return(this.questionS == 2);
 	}
+	
+	public static void main(String[] args) {
+		ActivityStatus a = new ActivityStatus();
+//		a.setQuestionN(0);
+//		a.setQuestionS(1);
+		String as = JSONObject.toJSONString(a);
+		System.out.println(as);
+		ActivityStatus b = JSONObject.parseObject(as, ActivityStatus.class);
+		System.out.println(b.getQuestionN() +"," + b.getQuestionS());
+	}
+
 }

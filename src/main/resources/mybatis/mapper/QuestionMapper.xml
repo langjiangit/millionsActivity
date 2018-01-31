@@ -6,8 +6,8 @@
     <!-- 所有题目 -->
     <select id="listValidQuestions" resultType="com.bus.chelaile.model.Answer_subject">
         SELECT  id ,activityId ,orderNo ,subject ,`option` ,answer ,level ,status ,updataTime 
-        FROM answer_subject
-        
+        FROM answer_subject 
+        WHERE status != 2 
     </select>
     
        

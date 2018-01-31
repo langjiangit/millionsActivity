@@ -745,32 +745,7 @@ public class PushRedisCacheImplUtil implements ICache {
 		return map;
 	}
 
-	/*
-	 * 增加指定数目
-	 */
-	@Override
-	public void incrBy(String key, int incNumber, int exp) {
-		JedisPool pool = null;
-		Jedis conn = null;
-		try {
-			pool = getPool();
-			conn = pool.getResource();
-			conn.incrBy(key, incNumber);
-			if (exp != -1)
-				conn.expire(key, exp);
-		} catch (Exception e) {
-			log.error(String.format("Error occur in Redis.del, key=%s" + e.getMessage(), key));
-			if (pool != null && conn != null) {
-				pool.returnResource(conn);
-				pool = null;
-				conn = null;
-			}
-		} finally {
-			if (pool != null && conn != null)
-				pool.returnResource(conn);
-		}
-
-	}
+	
 
 	@Override
 	public Long publish(String channel, String message) {
@@ -838,6 +813,18 @@ public class PushRedisCacheImplUtil implements ICache {
 				pool.returnResource(conn);
 		}
 		return value;
+	}
+
+	@Override
+	public Map<String, String> getHsetAll(String key) {
+		logger.error("use wrong redis !!!");
+		return null;
+	}
+
+	@Override
+	public long incrBy(String key, int incNumber, int exp) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

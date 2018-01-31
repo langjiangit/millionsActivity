@@ -1,7 +1,7 @@
 package com.bus.chelaile.model.account;
 
 /**
- * 用户当前活动的答题状态
+ * 用户 当前活动的答题状态
  * @author quekunkun
  *
  */
@@ -16,6 +16,10 @@ public class AccountActivityStatus {
 	
 	public AccountActivityStatus() {
 		super();
+		isLive = true;
+		isRAnswer = true;
+		answerOrder = -1;
+		order = -1;
 	}
 	
 	public boolean isLive() {
@@ -49,5 +53,11 @@ public class AccountActivityStatus {
 
 	public void setAnswerOrder(int answerOrder) {
 		this.answerOrder = answerOrder;
+	}
+
+	@Override
+	public String toString() {
+		return "AccountActivityStatus [isRAnswer=" + isRAnswer + ", canUsedCard=" + canUsedCard + ", isLive=" + isLive
+				+ ", answerOrder=" + answerOrder + ", order=" + order + "]";
 	}
 }

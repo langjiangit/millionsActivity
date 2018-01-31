@@ -1,6 +1,6 @@
 package com.bus.chelaile.mvc.model;
 
-public class HomeAction {
+public class ActivityInfo {
 
 	private String h2; // 副标题 如 乘车路上答题 瓜分百万现金
 	private String date; // 时间描述 今天 or 明天 or 具体日期
