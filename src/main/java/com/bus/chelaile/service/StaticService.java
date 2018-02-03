@@ -31,9 +31,16 @@ public class StaticService {
 	
 	// TODO
 	// 测试通过后，改为 redis 存储。 需要同时取活动和题目作为key, activityId#questionN
-	private static final Map<String, AnswerData> ANSWER_DATAS = New.hashMap(); // 答题数据
+//	private static final Map<String, AnswerData> ANSWER_DATAS = New.hashMap(); // 答题数据
 																				// key=题目序号
 
+	public static void clearCache() {
+		ALL_ACTIVITIES.clear();
+		ALL_QUESTIONS.clear();
+		ORDER_SUBJECT.clear();
+		NOW_ACTIVITY.clear();
+	}
+	
 	public static Answer_subject getSubject(int subjectId) {
 		if (subjectId == -1 || ALL_QUESTIONS == null || ALL_QUESTIONS.size() == 0
 				|| !ALL_QUESTIONS.containsKey(subjectId)) {
@@ -78,19 +85,23 @@ public class StaticService {
 	}
 
 	public static AnswerData getAnswerData(int activityId, int questionStatusN) {
-		String key = activityId + "#" + questionStatusN;
-		AnswerData answerData;
-		if (ANSWER_DATAS.containsKey(key)) {
-			answerData = ANSWER_DATAS.get(key);
-		} else {
-			answerData = new AnswerData();
-		}
-		return answerData;
+//		String key = activityId + "#" + questionStatusN;
+//		AnswerData answerData;
+//		if (ANSWER_DATAS.containsKey(key)) {
+//			answerData = ANSWER_DATAS.get(key);
+//		} else {
+//			answerData = new AnswerData();
+//		}
+//		return answerData;
+		
+		return QuestionCache.getAnsweData(activityId, questionStatusN);
 	}
 
 	public static void setAnswerData(int activityId, int questionStatusN, AnswerData answerData) {
-		String key = activityId + "#" + questionStatusN;
-		ANSWER_DATAS.put(key, answerData);
+//		String key = activityId + "#" + questionStatusN;
+//		ANSWER_DATAS.put(key, answerData);
+		
+		QuestionCache.setAnsweData(activityId, questionStatusN, answerData);
 	}
 
 	/**
@@ -125,11 +136,12 @@ public class StaticService {
 	 *            用户是否使用了复活卡
 	 */
 	public static void updateAnswerData(int activityId, int questionStatusN, int pAnswer, boolean hasUsedCard, boolean isLive) {
-		String key = activityId + "#" + questionStatusN;
+//		String key = activityId + "#" + questionStatusN;
 		AnswerData answerData = getAnswerData(activityId, questionStatusN);
 		answerData.addOneRecord(questionStatusN, pAnswer, hasUsedCard, isLive);
 
-		ANSWER_DATAS.put(key, answerData);
+//		ANSWER_DATAS.put(key, answerData);
+		QuestionCache.setAnsweData(activityId, questionStatusN, answerData);
 	}
 
 
@@ -137,26 +149,24 @@ public class StaticService {
 	 * 根据长连接，更新在线人数
 	 */
 	public static int updateAnswerDataFromLivePeople(int realLive, int activityId, boolean isSendFirstSubject) {
-		int realAnswerNum = 0;
 		// 查询当前 答题活动状态
 		ActivityStatus questionStatus = QuestionCache.getQuestionStatus(activityId);
 		Answer_activity activity = ALL_ACTIVITIES.get(activityId);
 		AnswerData answerData = getAnswerData(activityId, questionStatus.getQuestionN());
 //		logger.info("更新前的答题数据为：{}", JSONObject.toJSON(answerData));
 
-		logger.info("根据长连接数，更新当前在线人数，isSendFirstSubject={}, questionStatus={}", isSendFirstSubject,
-				JSONObject.toJSON(questionStatus));
-		if (isSendFirstSubject || questionStatus.gameNotBegin()) { // 还未开始答题，
-																	// 可答题人数=在线人数
-			logger.info("发送第一道题的时候，或者，还未开始答题，设置可答题人数=在线人数");
-			realAnswerNum = realLive;
-			answerData.updateAnswerNum(realAnswerNum, activity.getRobotMultiple());
-		}
+//		logger.info("根据长连接数，更新当前在线人数，isSendFirstSubject={}, questionStatus={}", isSendFirstSubject,
+//				JSONObject.toJSON(questionStatus));
 		answerData.updateWatchLiving(realLive, activity.getRobotMultiple());
+		if (isSendFirstSubject || questionStatus.gameNotBegin()) { // 还未开始答题，可答题人数=在线人数
+			logger.info("发送第一道题的时候，或者，还未开始答题，设置可答题人数=在线人数");
+			answerData.copyAnswerFromWatch();
+		}
 
 //		logger.info("更新后的答题数据为：{}", JSONObject.toJSON(answerData));
-		String key = activityId + "#" + questionStatus.getQuestionN();
-		ANSWER_DATAS.put(key, answerData);
+//		String key = activityId + "#" + questionStatus.getQuestionN();
+//		ANSWER_DATAS.put(key, answerData);
+		QuestionCache.setAnsweData(activityId, questionStatus.getQuestionN(), answerData);
 
 		return answerData.getWatchLiving().getTotal().get();
 	}
@@ -171,6 +181,9 @@ public class StaticService {
 		}
 
 		Map<Integer, Answer_activity> map = getAllActivity();
+		if(map == null) {
+			return null;
+		}
 		Answer_activity activity = null;
 
 		// 获取即将或者正在进行的活动
@@ -206,11 +219,11 @@ public class StaticService {
 
 		activity.setIsonLive(isOnlive);
 		NOW_ACTIVITY.add(activity);
-		logger.info("活动id:{}", activity.getActivityId());
+		logger.info("当前活动id:{}", activity.getActivityId());
 		return activity;
 	}
 
-
+	
 	/**
 	 * 应该按照优先级倒叙排序
 	 */
@@ -224,6 +237,7 @@ public class StaticService {
 			return o1.getStartTime().compareTo(o2.getStartTime());
 		}
 	};
+
 
 	/*
 	 * 获取最近一次的活动

@@ -11,13 +11,12 @@ public class AccountActivityStatus {
 	private boolean canUsedCard; //是否使用复活卡
 	private boolean isLive; //是否存活
 	private int answerOrder; // 用户选择的是第几题
-	
 	private int order; //用户答到第几题了
 	
 	public AccountActivityStatus() {
 		super();
 		isLive = true;
-		isRAnswer = true;
+		isRAnswer = false;
 		answerOrder = -1;
 		order = -1;
 	}

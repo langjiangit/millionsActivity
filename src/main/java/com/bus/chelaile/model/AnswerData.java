@@ -28,9 +28,10 @@ public class AnswerData {
 	private NumbersModel reLive = new NumbersModel(); // 使用复活卡人数
 
 	private NumbersModel outPeople = new NumbersModel(); // 出局的人数
+	
+	private NumbersModel rightOptionNum = new NumbersModel(); // 正确答案的人数
 
 	private boolean hasCountRobot = false; // 是否计算过机器人数目
-
 	/*
 	 * 阅卷中，增加每个选项的真实人数
 	 */
@@ -45,7 +46,9 @@ public class AnswerData {
 			break;
 		case 2:
 			this.option3Num.getRealNum().getAndAdd(1);
+			break;
 		default:
+			this.notAnswer.getRealNum().getAndAdd(1);
 			break;
 		}
 		if (hasUsedCard) {
@@ -54,6 +57,9 @@ public class AnswerData {
 		if (!isLive) {
 			this.outPeople.getRealNum().getAndAdd(1);
 		}
+//		if (isLive && !hasUsedCard) {  // 或者，没有使用复活卡，所以--> 答对
+//			this.getRightOptionNum().getRealNum().getAndAdd(1);
+//		}
 	}
 
 	/**
@@ -99,13 +105,28 @@ public class AnswerData {
 		this.reLive.getRobotNum().set(this.reLive.getRealNum().get() * robotMultiple);
 		this.reLive.getTotal().set(this.reLive.getRobotNum().get() + this.reLive.getRealNum().get());
 
+		// 记录 ‘这一题答对的人的情况’ ,跟随正确选项即可 
 		this.setSubjectId(StaticService.ORDER_SUBJECT.get(questionN));
+		Answer_subject subject = StaticService.getSubject(subjectId);
+		if(subject.getAnswer() == 0) {
+			this.rightOptionNum.getTotal().set(this.option1Num.getTotal().get());
+			this.rightOptionNum.getRealNum().set(this.option1Num.getRealNum().get());
+			this.rightOptionNum.getRobotNum().set(this.option1Num.getRobotNum().get());
+		} else if(subject.getAnswer() == 1) {
+			this.rightOptionNum.getTotal().set(this.option2Num.getTotal().get());
+			this.rightOptionNum.getRealNum().set(this.option2Num.getRealNum().get());
+			this.rightOptionNum.getRobotNum().set(this.option2Num.getRobotNum().get());
+		} else if(subject.getAnswer() == 2) {
+			this.rightOptionNum.getTotal().set(this.option3Num.getTotal().get());
+			this.rightOptionNum.getRealNum().set(this.option3Num.getRealNum().get());
+			this.rightOptionNum.getRobotNum().set(this.option3Num.getRobotNum().get());
+		}
 
 	}
 
 	/**
 	 * 创建下一个态的 QuestionData，将在线人数、和可答题人数继承下去，供下一题的初始化使用 既：
-	 * copy在线人数，计算可答题人数（当前可答题人数-out的人数)
+	 * copy在线人数，计算可答题人数（答对的人数+使用复活卡的人数)
 	 * 
 	 * @param answerData
 	 */
@@ -113,11 +134,11 @@ public class AnswerData {
 		this.watchLiving = answerData.watchLiving;
 
 		this.answerNum.getRealNum().set(
-				answerData.getAnswerNum().getRealNum().get() - answerData.getOutPeople().getRealNum().get());
+				answerData.getRightOptionNum().getRealNum().get() + answerData.getReLive().getRealNum().get());
 		this.answerNum.getRobotNum().set(
-				answerData.getAnswerNum().getRobotNum().get() - answerData.getOutPeople().getRobotNum().get());
+				answerData.getRightOptionNum().getRobotNum().get() + answerData.getReLive().getRobotNum().get());
 		this.answerNum.getTotal().set(
-				answerData.getAnswerNum().getTotal().get() - answerData.getOutPeople().getTotal().get());
+				answerData.getRightOptionNum().getTotal().get() + answerData.getReLive().getTotal().get());
 	}
 
 	/**
@@ -125,26 +146,47 @@ public class AnswerData {
 	 * 
 	 * @param realLive
 	 */
-	// TODO Auto-generated method stub ,按照文档优化算法
+	// 这个工作，拿出来用单独的线程跑，感觉会更好
+	// TODO 
 	public void updateWatchLiving(int realLive, int robotMultiple) {
-		this.getWatchLiving().getTotal().set(realLive * (robotMultiple + 1));
+		int lastRealLive = this.getWatchLiving().getRealNum().get();
+		int lastRobotLive = this.getWatchLiving().getRobotNum().get();
+		
+		if(realLive > lastRealLive) {
+			// 人数增多
+			int add = (int) Math.round((realLive - lastRealLive) * (0.5 + Math.random()) * robotMultiple);
+			this.getWatchLiving().getRobotNum().set(lastRobotLive + add);
+		} else {
+			// 人数降低
+			int sub = (int) Math.round((lastRealLive - realLive) * (0.2 + Math.random() * 0.3) * robotMultiple);
+			this.getWatchLiving().getRobotNum().set(lastRobotLive - sub);
+		}
+		  
+		this.getWatchLiving().getTotal().set(realLive + this.getWatchLiving().getRobotNum().get());
 		this.getWatchLiving().getRealNum().set(realLive);
-		this.getWatchLiving().getRobotNum().set(realLive * robotMultiple);
-
 	}
 
+	
 	/*
 	 * 更新可答题人数
 	 */
-	public void updateAnswerNum(int realAnswerNum, int robotMultiple) {
-		// TODO Auto-generated method stub
-		this.getAnswerNum().getTotal().set(realAnswerNum * (robotMultiple + 1));
-		this.getAnswerNum().getRealNum().set(realAnswerNum);
-		this.getAnswerNum().getRobotNum().set(realAnswerNum * robotMultiple);
+	public void copyAnswerFromWatch() {
+		int realLive = this.getWatchLiving().getRealNum().get();
+		int robotLive = this.getWatchLiving().getRobotNum().get();
+		int totalLive = this.getWatchLiving().getTotal().get();
+		
+		this.answerNum.getRealNum().set(realLive);
+		this.answerNum.getTotal().set(totalLive);
+		this.answerNum.getRobotNum().set(robotLive);
 	}
 
-	public void changeData(int watchingRobot, int option1Robot, int option2Robot, int option3Robot, int notAnsRobot,
+	/*
+	 * 来自运营后台的###数据修正###
+	 */
+	public void changeData(int rightAnswer, int watchingRobot, int option1Robot, int option2Robot, int option3Robot, int notAnsRobot,
 			int reLivingRobot) {
+		int rightRobot = 0;
+		
 		if (watchingRobot != -1) {
 			this.watchLiving.getRobotNum().set(this.watchLiving.getRobotNum().get() + watchingRobot);
 			this.watchLiving.getTotal().set(this.watchLiving.getTotal().get() + watchingRobot);
@@ -152,14 +194,20 @@ public class AnswerData {
 		if (option1Robot != -1) {
 			this.option1Num.getRobotNum().set(this.option1Num.getRobotNum().get() + option1Robot);
 			this.option1Num.getTotal().set(this.option1Num.getTotal().get() + option1Robot);
+			if(rightAnswer == 0)
+				rightRobot = option1Robot;
 		}
 		if (option2Robot != -1) {
 			this.option2Num.getRobotNum().set(this.option2Num.getRobotNum().get() + option2Robot);
 			this.option2Num.getTotal().set(this.option2Num.getTotal().get() + option2Robot);
+			if(rightAnswer == 1)
+				rightRobot = option2Robot;
 		}
 		if (option3Robot != -1) {
 			this.option3Num.getRobotNum().set(this.option3Num.getRobotNum().get() + option3Robot);
 			this.option3Num.getTotal().set(this.option3Num.getTotal().get() + option3Robot);
+			if(rightAnswer == 2)
+				rightRobot = option3Robot;
 		}
 		if (notAnsRobot != -1) {
 			this.notAnswer.getRobotNum().set(this.notAnswer.getRobotNum().get() + notAnsRobot);
@@ -171,13 +219,25 @@ public class AnswerData {
 			this.reLive.getRobotNum().set(this.reLive.getRobotNum().get() + reLivingRobot);
 			this.reLive.getTotal().set(this.reLive.getTotal().get() + reLivingRobot);
 		
-			// 可答题人数，直接受复活人数影响
-			this.answerNum.getRobotNum().set(this.answerNum.getRobotNum().get() + reLivingRobot);
-			this.answerNum.getTotal().set(this.answerNum.getTotal().get() + reLivingRobot);
+			// 可答题人数，直接受复活人数+ right answer people
+			this.answerNum.getRobotNum().set(this.answerNum.getRobotNum().get() + reLivingRobot + rightRobot);
+			this.answerNum.getTotal().set(this.answerNum.getTotal().get() + reLivingRobot + rightRobot);
 		}
 		
 		
-		
+		if(rightAnswer == 0) {
+			this.rightOptionNum.getTotal().set(this.option1Num.getTotal().get());
+			this.rightOptionNum.getRealNum().set(this.option1Num.getRealNum().get());
+			this.rightOptionNum.getRobotNum().set(this.option1Num.getRobotNum().get());
+		} else if(rightAnswer == 1) {
+			this.rightOptionNum.getTotal().set(this.option2Num.getTotal().get());
+			this.rightOptionNum.getRealNum().set(this.option2Num.getRealNum().get());
+			this.rightOptionNum.getRobotNum().set(this.option2Num.getRobotNum().get());
+		} else if(rightAnswer == 2) {
+			this.rightOptionNum.getTotal().set(this.option3Num.getTotal().get());
+			this.rightOptionNum.getRealNum().set(this.option3Num.getRealNum().get());
+			this.rightOptionNum.getRobotNum().set(this.option3Num.getRobotNum().get());
+		}
 	}
 
 	public NumbersModel getWatchLiving() {
@@ -263,9 +323,14 @@ public class AnswerData {
 	public static void main(String[] args) {
 		AnswerData data = new AnswerData();
 		data.updateWatchLiving(12, 20);
-		data.updateAnswerNum(123, 20);
 
 		System.out.println(JSONObject.toJSONString(data));
+		
+		System.out.println((int) Math.round(10 * (0.5 + Math.random()) * 10));
+		System.out.println((int) Math.round(20 * (0.5 + Math.random()) * 10));
+		System.out.println((int) Math.round(10 * (0.5 + Math.random()) * 10));
+		System.out.println((int) Math.round(100 * (0.5 + Math.random()) * 10));
+		
 	}
 
 	public int getSubjectId() {
@@ -274,5 +339,13 @@ public class AnswerData {
 
 	public void setSubjectId(int subjectId) {
 		this.subjectId = subjectId;
+	}
+
+	public NumbersModel getRightOptionNum() {
+		return rightOptionNum;
+	}
+
+	public void setRightOptionNum(NumbersModel rightOptionNum) {
+		this.rightOptionNum = rightOptionNum;
 	}
 }

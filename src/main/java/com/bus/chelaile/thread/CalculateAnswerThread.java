@@ -98,7 +98,6 @@ public class CalculateAnswerThread implements Runnable {
 					}
 				}
 
-				
 				else if(! accountStatus.isLive()) {
 					logger.error("出现已经挂掉的用户答题的情况： accountId={}, accountStatus={}", accountId, accountStatus);
 					return;
@@ -109,10 +108,14 @@ public class CalculateAnswerThread implements Runnable {
 				// 超过两题未答
 				else if (answerSubject.getRealOrder() - accountStatus.getOrder() > 2) {
 					// order 不做改动
+					// TODO 
 					accountStatus.setRAnswer(answer.getpAnswer() == rightAnswer);
+					accountStatus.setRAnswer(false);
 					accountStatus.setLive(false);
 					accountStatus.setCanUsedCard(false);
-					logger.info("(连续断网两题才会发生的情况, 如果连续不答题，不会走到这里) accountId={}，当前进行到第{}题，用户只答到第{}题，用户错过了两题以上！", accountId,
+					accountStatus.setAnswerOrder(-1);
+					logger.info("(连续断网两题才会发生的情况, 如果连续不答题，不会走到这里[最新改动，连续两次未答题也不会走到这里，"
+							+ "初始化房间的时候，会进行生死查询，用户已经不可能再提交答案了]) accountId={}，当前进行到第{}题，用户只答到第{}题，用户错过了两题以上！", accountId,
 							questionStatus.getQuestionN(), accountStatus.getOrder());
 				}
 
@@ -120,9 +123,17 @@ public class CalculateAnswerThread implements Runnable {
 				else if (answerSubject.getRealOrder() - accountStatus.getOrder() == 2) {
 					accountStatus.setLive(QuestionCache.useCard(accountId, accountStatus.isCanUsedCard(), true)); // 使用复活卡
 					accountStatus.setCanUsedCard(false);
-					if(accountStatus.isLive()) { // 存活，才修改order，以让用户跟上答题进度
+					if(accountStatus.isLive()) { // 漏题结账后，还活着，看当前这一题答对否
 						accountStatus.setRAnswer(answer.getpAnswer() == rightAnswer);
+						accountStatus.setLive(accountStatus.isRAnswer());
 						accountStatus.setOrder(answerSubject.getRealOrder());
+						accountStatus.setAnswerOrder(answer.getpAnswer());
+					} else {
+						// 用户挂掉了
+						logger.info("如果初始化查询生死正确，用户也不会走到这一步！ accountId={}, questionStatus={}", 
+								accountId, JSONObject.toJSONString(questionStatus));
+						accountStatus.setRAnswer(false);
+						accountStatus.setAnswerOrder(-1);
 					}
 					logger.info("accountId={}，当前进行到第{}题，用户只答到第{}题，用户错过了某一题！", accountId, questionStatus.getQuestionN(),
 							accountStatus.getOrder());
@@ -133,17 +144,18 @@ public class CalculateAnswerThread implements Runnable {
 					accountStatus.setRAnswer(true);
 					accountStatus.setLive(true);
 					accountStatus.setOrder(answerSubject.getRealOrder());
+					accountStatus.setAnswerOrder(answer.getpAnswer());
 				} else if (answer.getpAnswer() != rightAnswer) { // 答错
 					accountStatus.setRAnswer(false);
 					accountStatus.setLive(QuestionCache.useCard(accountId, accountStatus.isCanUsedCard(), true));
 					accountStatus.setCanUsedCard(false);
 					accountStatus.setOrder(answerSubject.getRealOrder());
+					accountStatus.setAnswerOrder(answer.getpAnswer());
 				} else {
 					logger.error("遇到未考虑的情况， accountId={}", accountId);
 				}
 
 				// 更新用户的答题状态
-				accountStatus.setAnswerOrder(answer.getpAnswer());
 				QuestionCache.updateAccountStatus(accountId, accountStatus, activityId);
 				
 				// 更新答题总数据
@@ -154,7 +166,7 @@ public class CalculateAnswerThread implements Runnable {
 				
 				// 记录答对题目的人
 				if(accountStatus.isLive()) {
-					CacheUtil.setHashSetValue(livePeopleKey, accountId, "");
+					CacheUtil.setHashSetValue(livePeopleKey, accountId, "1");
 				}
 				
 			}
@@ -163,6 +175,11 @@ public class CalculateAnswerThread implements Runnable {
 		
 
 		// 阅卷结束，修改状态
+//		try {
+//			Thread.sleep();
+//		} catch (InterruptedException e) {
+//			e.printStackTrace();
+//		}
 		logger.info("阅卷结束！ ");
 		System.out.println("阅卷结束！ " + ", questionStatus=" + JSONObject.toJSONString(questionStatus));
 		questionStatus.setQuestionS(1);

@@ -12,8 +12,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bus.chelaile.common.QuestionCache;
+import com.bus.chelaile.model.account.AccountInfo;
 import com.bus.chelaile.service.PublishDataService;
 import com.bus.chelaile.service.ServiceManager;
+import com.bus.chelaile.service.StartService;
 
 @Controller
 @RequestMapping("v1")
@@ -23,6 +26,8 @@ public class QueryAction extends AbstractController {
 	private ServiceManager serviceManager;
 	@Resource
 	private PublishDataService publishDataService;
+	@Resource
+	private StartService startService;
 	private static final Logger logger = LoggerFactory.getLogger(QueryAction.class);
 
 	/*
@@ -34,7 +39,6 @@ public class QueryAction extends AbstractController {
 			throws Exception {
 
 		QuestionParam param = getActionParam(request);
-		logger.info("活动首页，查询相关信息, accountId={}, ", param.getAccountId());
 
 		return serviceManager.queryHomeInfo(param);
 	}
@@ -48,7 +52,6 @@ public class QueryAction extends AbstractController {
 			throws Exception {
 
 		QuestionParam param = getActionParam(request);
-		logger.info("房间初始化，查询相关信息, accountId={}, ", param.getAccountId());
 
 		return serviceManager.queryRoomInfo(param);
 	}
@@ -127,10 +130,7 @@ public class QueryAction extends AbstractController {
 	public String queryQuestionData(HttpServletRequest request, HttpServletResponse response, HttpSession session)
 			throws Exception {
 
-		QuestionParam param = getActionParam(request);
-		logger.info("查询答题总数据, activityId={}", param.getActivityId());
-
-		return serviceManager.queryQuestionData(param);
+		return serviceManager.queryQuestionData();
 	}
 
 	/*
@@ -168,6 +168,56 @@ public class QueryAction extends AbstractController {
 		logger.info("填写邀请码, accountId={}, inviteCode={}", param.getAccountId(), param.getInviteCode());
 
 		return serviceManager.fillInCode(param);
+	}
+	
+	/*
+	 * reloadData
+	 */
+	@ResponseBody
+	@RequestMapping(value = "reloadData.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String reloadData(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws Exception {
+
+		logger.info("reload *******************************");
+		System.out.println("reload *******************************");
+
+		startService.init();
+		
+		return serviceManager.getClienSucMap("", "00");
+	}
+	
+	
+	/*
+	 * test
+	 */
+	@ResponseBody
+	@RequestMapping(value = "setCode.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String setCode(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws Exception {
+
+		QuestionParam param = getActionParam(request);
+		int codeNum = getInt(request, "codeNum");
+		logger.info("设置复活码数目：accountId={}, codeNum={}", param.getAccountId(), codeNum);
+		
+		AccountInfo accountInfo = QuestionCache.getAccountInfo(param.getAccountId());
+		accountInfo.setCardNum(codeNum);
+		QuestionCache.updateAccountInfo(param.getAccountId(), accountInfo);
+		
+		return serviceManager.getClienSucMap(new JSONObject(), "00");
+	}
+	
+	
+	/*
+	 * 车来了宣布活动无效！
+	 */
+	@ResponseBody
+	@RequestMapping(value = "finish.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String finish(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws Exception {
+
+		logger.info("车来了宣布活动无效！！ ");
+
+		return publishDataService.sendFinishMsg();
 	}
 
 	/*

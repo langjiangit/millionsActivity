@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.bus.chelaile.common.cache.ICache;
 import com.bus.chelaile.common.cache.OCSCacheUtil;
+import com.bus.chelaile.common.cache.PayRedisCacheImplUtil;
 import com.bus.chelaile.common.cache.PushRedisCacheImplUtil;
 import com.bus.chelaile.common.cache.RedisCacheImplUtil;
 import com.bus.chelaile.model.PropertiesName;
@@ -23,6 +24,8 @@ public class CacheUtil {
 	private static ICache redisClient;
 
 	private static ICache redisPush;
+	
+	private static ICache redisPay;
 
 	private static boolean isInitSuccess = false;
 
@@ -40,6 +43,8 @@ public class CacheUtil {
 			"ocs.password");
 	private static final String PUBMSG_CLIENT_COUNT = PropertiesUtils.getValue(PropertiesName.CACHE.getValue(),
 			"pubmsg.client_count", "pubmsg#client-count");
+	private static final String PUBLISH_CHANNEL = PropertiesUtils.getValue(PropertiesName.CACHE.getValue(),
+			"pubmsg.client_key", "pubmsg#ws");
 
 	public static void initClient() {
 
@@ -50,7 +55,7 @@ public class CacheUtil {
 
 		System.out.println("*********** cacheType=" + cacheType);
 		// TODO
-		// cacheType = "redis";
+		 cacheType = "redis";
 		if (cacheType.equals("redis")) {
 			client = new RedisCacheImplUtil();
 			System.out.println("redis cache");
@@ -63,6 +68,7 @@ public class CacheUtil {
 		}
 		redisClient = new RedisCacheImplUtil();
 		redisPush = new PushRedisCacheImplUtil();
+		redisPay = new PayRedisCacheImplUtil();
 		isInitSuccess = true;
 	}
 
@@ -118,8 +124,8 @@ public class CacheUtil {
 		return redisClient.zrevRangeByScore(key, endScore, startScore, count);
 	}
 
-	public static Long publish(String channel, String message) {
-		return redisPush.publish(channel, message);
+	public static Long publish(String message) {
+		return redisPush.publish(PUBLISH_CHANNEL, message);
 	}
 	
 	/*
@@ -167,6 +173,10 @@ public class CacheUtil {
 
 	public static OperationFuture<Boolean> delete(String key) {
 		return client.delete(key);
+	}
+	
+	public static void pushMoney(String key, String value) {
+		redisPay.lpush(key, value);
 	}
 
 	public static void main(String[] args) throws InterruptedException {

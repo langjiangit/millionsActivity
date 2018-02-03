@@ -7,7 +7,7 @@
     <select id="listValidActivities" resultType="com.bus.chelaile.model.Answer_activity">
         SELECT activityId ,activityName ,startTime ,totalBonus ,robotMultiple ,createTime ,updateTime ,operate ,status 
         FROM answer_activity 
-		WHERE status != 4 and status != 3 
+		WHERE status = 0 or status = 1 
     </select>
     
        

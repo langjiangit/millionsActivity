@@ -49,10 +49,21 @@ public class ActivityService {
 	 * @param questionParam
 	 * @return
 	 */
-	public ActivityInfo getActivitInfo(QuestionParam questionParam) {
+	public ActivityInfo getActivitInfoFromHome(QuestionParam questionParam) {
 		Answer_activity activity = StaticService.getNowOrNextActivity();
 		if (activity == null) {
-			return null;
+			ActivityInfo returnActivity = new ActivityInfo();
+			returnActivity.setH2("");
+			returnActivity.setDate("敬请期待");
+			returnActivity.setTime("神秘大奖");
+			returnActivity.setTotalMoney("???0000");
+			if (StringUtils.isNoneBlank(questionParam.getAccountId())) {
+				AccountInfo accInfo = QuestionCache.getAccountInfo(questionParam.getAccountId());
+				returnActivity.setRelive(accInfo.getCardNum());
+				returnActivity.setInviteCode(accInfo.getInviteCode());
+				returnActivity.setCanFillCode(accInfo.getCanFillCode());
+			}
+			return returnActivity;
 		}
 
 		ActivityInfo returnActivity = new ActivityInfo();

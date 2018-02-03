@@ -23,6 +23,8 @@ public class StartService {
 	
 	public List<String> init() {
 		
+		StaticService.clearCache();
+		
 		CacheUtil.initClient();
 		
 		// 读取数据库内的文章和活动信息，写入缓存

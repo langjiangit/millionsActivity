@@ -1,10 +1,14 @@
 package com.bus.chelaile.model.account;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.bus.chelaile.common.CacheUtil;
 import com.bus.chelaile.common.QuestionCache;
 
 public class AccountInfo {
 	
+	private static final Logger logger = LoggerFactory.getLogger(AccountInfo.class);
 //	private int activityId; 
 	private String accountId;
 	private String udid;
@@ -55,6 +59,7 @@ public class AccountInfo {
 		super();
 		this.accountId = aid;
 		this.inviteCode = createCode(aid);
+		logger.info("生成邀请码, inviteCode={}", this.inviteCode);
 		// 初始化， 设置复活卡，并存入缓存，复活卡作为key，用户id作为value
 		
 	}

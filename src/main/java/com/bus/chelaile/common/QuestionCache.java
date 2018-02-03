@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.bus.chelaile.model.ActivityStatus;
+import com.bus.chelaile.model.AnswerData;
 import com.bus.chelaile.model.account.AccountActivityStatus;
 import com.bus.chelaile.model.account.AccountInfo;
 import com.bus.chelaile.service.StaticService;
@@ -151,5 +152,23 @@ public class QuestionCache {
 
 	public static String getCodeCreateKey() {
 		return CODE_CREATE_KEY;
+	}
+	
+	public static AnswerData getAnsweData(int activityId, int questionStatusN) {
+		String key = activityId + "#" + questionStatusN;
+		String value = (String) CacheUtil.getFromRedis(key);
+		
+		if(StringUtils.isNoneBlank(value)) {
+			return JSONObject.parseObject(value, AnswerData.class);
+		} else {
+			AnswerData answerData = new AnswerData();;
+			return answerData;
+		}
+	}
+	
+	public static void setAnsweData(int activityId, int questionStatusN, AnswerData data) {
+		String key = activityId + "#" + questionStatusN;
+		
+		CacheUtil.setToRedis(key, -1, JSONObject.toJSONString(data));
 	}
 }

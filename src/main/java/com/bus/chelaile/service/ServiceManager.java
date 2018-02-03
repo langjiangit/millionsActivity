@@ -43,7 +43,6 @@ public class ServiceManager {
 	protected static final Logger logger = LoggerFactory.getLogger(ServiceManager.class);
 
 	static HashMap<Integer, String> rooms = new HashMap<Integer, String>();
-	private static final String QUESTION_CHANNEL = "ws";
 
 	public String getClienSucMap(Object obj, String status) {
 		JsonStr jsonStr = new JsonStr();
@@ -99,9 +98,10 @@ public class ServiceManager {
 			e.printStackTrace();
 		}
 
-		Map<String, PubQuestion> sendQustion = New.hashMap();
+		Map<String, Object> sendQustion = New.hashMap();
 		sendQustion.put("q", pubQuestion);
-		Long pubResult = CacheUtil.publish(QUESTION_CHANNEL, JSONObject.toJSONString(sendQustion));
+		sendQustion.put("s", System.currentTimeMillis());
+		Long pubResult = CacheUtil.publish(JSONObject.toJSONString(sendQustion));
 		if (pubResult != 0) {
 			logger.info("发题成功, id={}", subjectId);
 		} else {
@@ -144,18 +144,21 @@ public class ServiceManager {
 	 * 
 	 * @return
 	 */
-	public String queryQuestionData(QuestionParam param) {
+	public String queryQuestionData() {
 
 		// 查询当前 答题活动状态
-		ActivityStatus questionStatus = QuestionCache.getQuestionStatus(param.getActivityId());
-		Answer_activity activity = StaticService.getActivity(param.getActivityId());
-		logger.info("活动不存在, activityId={}", param.getActivityId());
-		
+		Answer_activity activity = StaticService.getNowOrNextActivity();
+		if(activity == null) {
+			logger.info("meiyou jingxing de huodong ");
+			return getClienSucMap("", "00");
+		}
+		ActivityStatus questionStatus = QuestionCache.getQuestionStatus(activity.getActivityId());
 		AnswerData answerData = StaticService.getAnswerData(activity.getActivityId(), questionStatus.getQuestionN());
 		JSONObject responseJ = new JSONObject();
 		responseJ.put("canChanged", 1);
 		if (questionStatus.hasToCalculated()) {
 			System.out.println("开始计算 ， questionStatus=" + JSONObject.toJSONString(questionStatus));
+			
 			answerData.calcuRobots(questionStatus.getQuestionN(), activity.getRobotMultiple());
 
 			// 更新当前态的数目, 供查询使用
@@ -168,10 +171,15 @@ public class ServiceManager {
 
 			logger.info("计算结束 ");
 			questionStatus.setQuestionS(2);
-			QuestionCache.updateQuestionStatus(param.getActivityId(), questionStatus);
+			QuestionCache.updateQuestionStatus(activity.getActivityId(), questionStatus);
+		} else if (questionStatus.hasCalculated()) {
+			// 计算完毕，修改数据阶段
+			AnswerData nextAnswerData = StaticService.getAnswerData(activity.getActivityId(), questionStatus.getQuestionN() + 1);
+			nextAnswerData.copyFromLastData(answerData);
+			StaticService.setAnswerData(activity.getActivityId(), questionStatus.getQuestionN() + 1, nextAnswerData);
 		} else if (!questionStatus.hasCalculated()) { // !=2 的情况，都不可以修改
 			responseJ.put("canChanged", 0);
-			logger.info("当前状态不可修改数据：questionStatus={}", JSONObject.toJSONString(questionStatus));
+//			logger.info("当前状态不可修改数据：questionStatus={}", JSONObject.toJSONString(questionStatus));
 		}
 
 		responseJ.put("index", questionStatus.getQuestionN() + 1);
@@ -192,6 +200,8 @@ public class ServiceManager {
 			 return getClienSucMap("", "00");
 		 }
 		 ActivityStatus questionStatus = QuestionCache.getQuestionStatus(activity.getActivityId());
+		 int subjectId = StaticService.ORDER_SUBJECT.get(questionStatus.getQuestionN());
+		 int rightAnswer = StaticService.getSubject(subjectId).getAnswer();
 		 AnswerData answerData = StaticService.getAnswerData(activity.getActivityId(), questionStatus.getQuestionN());
 		 	
 		 if(activityId != activity.getActivityId()) {
@@ -200,7 +210,7 @@ public class ServiceManager {
 			 return getClienSucMap("", "00");
 		 }
 		 
-		 answerData.changeData(watchingRobot,option1Robot,option2Robot,option3Robot,notAnsRobot,reLivingRobot);
+		 answerData.changeData(rightAnswer, watchingRobot,option1Robot,option2Robot,option3Robot,notAnsRobot,reLivingRobot);
 		 StaticService.setAnswerData(activity.getActivityId(), questionStatus.getQuestionN(), answerData);
 		 return getClienSucMap("", "00");
 	 }
@@ -235,34 +245,56 @@ public class ServiceManager {
 
 		String accountId = param.getAccountId();
 		AccountActivityStatus accountStatus = QuestionCache.getAccountStatus(accountId, activity.getActivityId());
-		logger.info("用户答题状态， accountStatus={}", accountStatus);
+		logger.info("用户答题状态， accountStatus={}, accountId={}", accountStatus, param.getAccountId());
 		ActivityStatus questionStatus = QuestionCache.getQuestionStatus(activity.getActivityId());
-		logger.info("活动状态, questionStatus={}", JSONObject.toJSONString(questionStatus));
+		logger.info("活动状态, questionStatus={}, accountId={}", JSONObject.toJSONString(questionStatus), param.getAccountId());
+		
+		int questionN = questionStatus.getQuestionN();
+		if(questionStatus.getQuestionS() < 1) {
+			logger.info("********* 阅卷还未结束, 此时活动状态比用户状态要多1，这时来查询属于意外进场，应该将活动进度回退1题状态,, accountId={}");
+			questionN --;
+		}
+		
+		
 		if (accountStatus == null) {
 			logger.info("没有答题记录, accountId={}", accountId);
 			accountStatus = new AccountActivityStatus();
-			if (questionStatus.getQuestionN() != -1) {
-				logger.info("已经开题了，用户错过了第一题， 不能继续答题");
+			if (questionN > -1) {
+				logger.info("已经开题了，用户错过了第一题， 不能继续答题, accountId={}", param.getAccountId());
 				accountStatus.setLive(false);
 			}
 		} else {
-			// 用户漏答题目了，并且之前活着
-			if ((questionStatus.getQuestionN() != accountStatus.getOrder()) && accountStatus.isLive()) {
-				if (questionStatus.getQuestionN() - accountStatus.getOrder() > 1) {
-					logger.info("漏答超过两题题目");
+			// 用户漏答题目了
+			if (questionN > accountStatus.getOrder()) {
+				//并且之前活着
+				if (accountStatus.isLive()) {
+					if (questionN - accountStatus.getOrder() > 1) {
+						logger.info("漏答超过两题题目，直接判负, accountId={}", param.getAccountId());
+						accountStatus.setAnswerOrder(-1);
+						accountStatus.setLive(false);
+						accountStatus.setRAnswer(false);
+					} else if (questionN - accountStatus.getOrder() == 1) {
+						logger.info("漏答了一题, accountId={}", param.getAccountId());
+						accountStatus.setAnswerOrder(-1);
+						accountStatus.setRAnswer(false);
+						accountStatus.setLive(QuestionCache.useCard(accountId, accountStatus.isCanUsedCard(), true));
+						accountStatus.setCanUsedCard(false);
+						// 更上答题序号
+						// TODO ，此处如果使用复活卡，那么需要更新到数据中 ┭┮﹏┭┮
+						accountStatus.setOrder(questionN);
+						QuestionCache.updateAccountStatus(accountId, accountStatus, activity.getActivityId());
+					
+						StaticService.updateAnswerData(activity.getActivityId(), questionN, -1, accountStatus.isLive()
+								&& !accountStatus.isRAnswer(), accountStatus.isLive());
+					}
+				} else {
+					// 之前挂了
 					accountStatus.setAnswerOrder(-1);
-					// accountStatus.setRAnswer(false);
-					accountStatus.setLive(false);
-				} else if (questionStatus.getQuestionN() - accountStatus.getOrder() == 1) {
-					logger.info("漏答了一题");
-					accountStatus.setAnswerOrder(-1);
-					accountStatus.setLive(QuestionCache.useCard(accountId, accountStatus.isCanUsedCard(), false));
 				}
 			}
 		}
 
-		System.out.println("用户活动状态： accountId=" + accountId + ", accountStatus="
-				+ JSONObject.toJSONString(accountStatus));
+		logger.info("用户活动状态： accountId={}, accountStatus={}", accountId, JSONObject.toJSONString(accountStatus));
 		return getClienSucMap(accountStatus, "00");
 
 	}
@@ -278,7 +310,7 @@ public class ServiceManager {
 		Answer_activity activity = StaticService.getNowOrNextActivity();
 		if (activity == null) {
 			logger.error("初始化房间的时候，未能找到活动信息");
-			return getClientErrMap("当前活动未开启~", "00");
+			return getClientErrMap("当前活动未开启~", "05");
 		}
 
 		Object realiveO = CacheUtil.getPubClientNumber();
@@ -287,7 +319,6 @@ public class ServiceManager {
 			realLive = Integer.parseInt((String) CacheUtil.getPubClientNumber());
 		}
 
-		logger.info("获取到的实际链接数是：realLive={}", realLive);
 		int totaoLive = StaticService.updateAnswerDataFromLivePeople(realLive, activity.getActivityId(), false);
 
 		return getClienSucMap(activityService.getRoomInfo(param, activity, totaoLive), "00");
@@ -300,17 +331,15 @@ public class ServiceManager {
 	 */
 	public String queryHomeInfo(QuestionParam param) {
 
-		ActivityInfo info = activityService.getActivitInfo(param);
+		ActivityInfo info = activityService.getActivitInfoFromHome(param);
 		if (info != null) {
 			return getClienSucMap(info, "00");
 		} else {
-			return getClientErrMap("当前没有活动哟~", "00");
+			return getClienSucMap(info, "05");
+//			return getClientErrMap("当前没有活动哟~", "05");
 		}
 	}
 
-	public static void main(String args[]) {
-
-	}
 
 	/**
 	 * 填写邀请码；
@@ -320,10 +349,7 @@ public class ServiceManager {
 	 */
 	public String fillInCode(QuestionParam param) {
 		String code = param.getInviteCode();
-
-		// TODO 
-		// 加上校验，不是所有人都有资格填写邀请码的 ！！！
-		
+		code = code.toUpperCase();	// all UP
 		String codeKey = QuestionCache.getCodeCacheKey(code);
 		String accountId = (String) CacheUtil.getFromRedis(codeKey);
 		if (accountId == null) {
@@ -337,6 +363,10 @@ public class ServiceManager {
 			return getClienSucMap("不再允许填写邀请码了", Constants.STATUS_PARAM_ERROR);
 		}
 		AccountInfo incrAccount = QuestionCache.getAccountInfo(accountId);
+		
+		if(accountId.equals(param.getAccountId())) {
+			return getClienSucMap("不能填写自己的邀请码", Constants.STATUS_PARAM_ERROR);
+		}
 
 		logger.info("有效的邀请码, 各自赏一枚复活卡, 主动填写的人authorAccount={}, 被填的人accountId={}", param.getAccountId(), accountId);
 		authorAccount.setCardNum(authorAccount.getCardNum() + 1);
@@ -346,7 +376,12 @@ public class ServiceManager {
 		QuestionCache.updateAccountInfo(param.getAccountId(), authorAccount);
 		QuestionCache.updateAccountInfo(accountId, incrAccount);
 		return getClienSucMap("fill code success", Constants.STATUS_REQUEST_SUCCESS);
-		
-		
+	}
+	
+	
+	public static void main(String args[]) {
+		String code = "12312a";
+		code = code.toUpperCase();
+		System.out.println(code);
 	}
 }
