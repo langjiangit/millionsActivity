@@ -24,6 +24,9 @@ import com.bus.chelaile.util.config.PropertiesUtils;
 
 
 
+
+
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -229,6 +232,24 @@ public class OCSCacheUtil implements ICache{
 	@Override
 	public Map<String, String> getHsetAll(String key) {
 		logger.error("use wrong cache  !!!");
+		return null;
+	}
+
+	@Override
+	public void addHashSetValue(String yJkey, String field, int j) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void sadd(String key, String members) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Set<String> sdiff(String s1, String s2) {
+		// TODO Auto-generated method stub
 		return null;
 	}
 }

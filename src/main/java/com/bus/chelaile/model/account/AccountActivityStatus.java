@@ -1,5 +1,7 @@
 package com.bus.chelaile.model.account;
 
+import com.alibaba.fastjson.JSONObject;
+
 /**
  * 用户 当前活动的答题状态
  * @author quekunkun
@@ -19,6 +21,7 @@ public class AccountActivityStatus {
 		isRAnswer = false;
 		answerOrder = -1;
 		order = -1;
+		canUsedCard = true;
 	}
 	
 	public boolean isLive() {
@@ -54,9 +57,24 @@ public class AccountActivityStatus {
 		this.answerOrder = answerOrder;
 	}
 
+	
 	@Override
 	public String toString() {
 		return "AccountActivityStatus [isRAnswer=" + isRAnswer + ", canUsedCard=" + canUsedCard + ", isLive=" + isLive
 				+ ", answerOrder=" + answerOrder + ", order=" + order + "]";
+	}
+
+	public static void main(String[] args) {
+		AccountActivityStatus acc = new AccountActivityStatus();
+		acc.setLive(false);
+		acc.setAnswerOrder(0);
+		acc.setRAnswer(true);
+		acc.setCanUsedCard(true);
+		
+		System.out.println(JSONObject.toJSONString(acc));
+		String a = JSONObject.toJSONString(acc);
+		
+		AccountActivityStatus ac = JSONObject.parseObject(a, AccountActivityStatus.class);
+		System.out.println(ac);
 	}
 }

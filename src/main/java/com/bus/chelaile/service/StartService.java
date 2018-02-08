@@ -1,6 +1,8 @@
 package com.bus.chelaile.service;
 
 import java.util.List;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +13,7 @@ import com.bus.chelaile.dao.ActivityMapper;
 import com.bus.chelaile.dao.QuestionMapper;
 import com.bus.chelaile.model.Answer_activity;
 import com.bus.chelaile.model.Answer_subject;
+import com.bus.chelaile.thread.UpdateWathing;
 import com.bus.chelaile.util.New;
 
 public class StartService {
@@ -20,6 +23,7 @@ public class StartService {
 	private QuestionMapper questionMapper;
 	
 	protected static final Logger logger = LoggerFactory.getLogger(StartService.class);
+	private static final ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(1);
 	
 	public List<String> init() {
 		
@@ -41,6 +45,13 @@ public class StartService {
 			StaticService.addSubject(subject);
 		}
 		
+		// 启动任务，定时更新在线人数（真实人数、机器人、总人数）
+		// TODO 
+		Answer_activity activity = StaticService.getNowOrNextActivity();
+		if (activity != null) {
+			UpdateWathing updateW = new UpdateWathing(activity.getActivityId(), activity.getRobotMultiple());
+			exec.scheduleWithFixedDelay(updateW, 10, 10, TimeUnit.SECONDS);
+		}
 		return titles;
 	}
 }

@@ -46,9 +46,9 @@ public class PushRedisCacheImplUtil implements ICache {
 
 		// config.setMaxWait(2000000);
 		// config.setMaxWaitMillis();
-		config.setTestWhileIdle(true);
-		config.setTestOnBorrow(true);
-		config.setTestOnReturn(true);
+//		config.setTestWhileIdle(true);
+//		config.setTestOnBorrow(true);
+//		config.setTestOnReturn(true);
 
 		System.out.println("***** redis初始化， redis info , host=" + host + ", port=" + port);
 
@@ -825,6 +825,24 @@ public class PushRedisCacheImplUtil implements ICache {
 	public long incrBy(String key, int incNumber, int exp) {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	@Override
+	public void addHashSetValue(String yJkey, String field, int j) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void sadd(String key, String members) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Set<String> sdiff(String s1, String s2) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

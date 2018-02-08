@@ -63,7 +63,7 @@ public class AnswerLog {
 	}
 	
 	public static void main(String[] args) {
-		String a = "{\"accountId\":\"123\",\"pAnswer\":2,\"pTime\":1517038576713,\"questionId\":1}";
+		String a = "{\"accountId\":\"123\",\"pAnswer\":0,\"pTime\":1517038576713,\"questionId\":1}";
 //		AnswerLog an = JSONObject.toJavaObject(a, AnswerLog.class);
 //		System.out.println(an.getAccountId());
 		

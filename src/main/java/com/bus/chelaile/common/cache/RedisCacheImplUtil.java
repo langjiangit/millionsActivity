@@ -46,9 +46,10 @@ public class RedisCacheImplUtil implements ICache {
 
 		// config.setMaxWait(2000000);
 		// config.setMaxWaitMillis();
-		config.setTestWhileIdle(true);
-		config.setTestOnBorrow(true);
-		config.setTestOnReturn(true);
+		// TODO 
+//		config.setTestWhileIdle(true);
+//		config.setTestOnBorrow(true);
+//		config.setTestOnReturn(true);
 
 		System.out.println("***** redis初始化， redis info , host=" + host + ", port=" + port);
 
@@ -736,6 +737,30 @@ public class RedisCacheImplUtil implements ICache {
 		}
 		return result;
 	}
+	
+	public void addHashSetValue(String key, String field, int value) {
+		JedisPool pool = null;
+		Jedis conn = null;
+		Long result = null;
+		try {
+			pool = getPool();
+			conn = pool.getResource();
+			result = conn.hincrBy(key, field, value);
+			
+			log.debug("Redis-Hset: Key={}, field={}, value={}", key, field, result);
+		} catch (Exception e) {
+			log.error("Error occur in Redis.Hset, key={}, error message: {}", key, e.getMessage());
+			if (pool != null && conn != null) {
+				pool.returnResource(conn);
+				pool = null;
+				conn = null;
+			}
+		} finally {
+			if (pool != null && conn != null)
+				pool.returnResource(conn);
+		}
+		return;
+	}
 
 	@Override
 	public void set(String key, int exp, Object obj) {
@@ -866,5 +891,48 @@ public class RedisCacheImplUtil implements ICache {
 		}
 		return value;
 	}
+	
+	@Override
+	public void sadd(String key, String members) {
+		JedisPool pool = null;
+		Jedis conn = null;
+		try {
+			pool = getPool();
+			conn = pool.getResource();
+			conn.sadd(key, members);
+		} catch (Exception e) {
+			log.error(String.format("Error occur in Redis.sadd, key=%s" + e.getMessage(), key));
+			if (pool != null && conn != null) {
+				pool.returnResource(conn);
+				pool = null;
+				conn = null;
+			}
+		} finally {
+			if (pool != null && conn != null)
+				pool.returnResource(conn);
+		}
+	}
 
+	@Override
+	public Set<String> sdiff(String s1, String s2) {
+		JedisPool pool = null;
+		Jedis conn = null;
+		Set<String> result = New.hashSet();
+		try {
+			pool = getPool();
+			conn = pool.getResource();
+			result = conn.sdiff(s1, s2);
+		} catch (Exception e) {
+			log.error(String.format("Error occur in Redis.diff, key1=%s, keys=%s" + e.getMessage(), s1, s2));
+			if (pool != null && conn != null) {
+				pool.returnResource(conn);
+				pool = null;
+				conn = null;
+			}
+		} finally {
+			if (pool != null && conn != null)
+				pool.returnResource(conn);
+		}
+		return result;
+	}
 }

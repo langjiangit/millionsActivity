@@ -55,7 +55,7 @@ public class MoneyModel {
 		this.money = money;
 		try {
 			this.time = DateUtil.getFormatTime(new Date(), "yyyy-MM-dd HH:mm:ss");
-			this.serialNumber = System.currentTimeMillis() + userId;
+			this.serialNumber = "bus_" + System.currentTimeMillis() + userId;
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}

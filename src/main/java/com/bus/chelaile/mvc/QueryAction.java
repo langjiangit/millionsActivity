@@ -43,6 +43,8 @@ public class QueryAction extends AbstractController {
 		return serviceManager.queryHomeInfo(param);
 	}
 
+	
+	
 	/*
 	 * 房间初始化、查询房间信息
 	 */
@@ -188,7 +190,7 @@ public class QueryAction extends AbstractController {
 	
 	
 	/*
-	 * test
+	 * for TEST 
 	 */
 	@ResponseBody
 	@RequestMapping(value = "setCode.action", produces = "Content-Type=text/plain;charset=UTF-8")
@@ -206,6 +208,25 @@ public class QueryAction extends AbstractController {
 		return serviceManager.getClienSucMap(new JSONObject(), "00");
 	}
 	
+	/*
+	 * 用户查询信息（主机器，有写操作）
+	 */
+	@ResponseBody
+	@RequestMapping(value = "privateinfo.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String privateinfo(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws Exception {
+		QuestionParam param = getActionParam(request);
+		return serviceManager.getAccountInfo(param);
+	}
+	
+	
+	@ResponseBody
+	@RequestMapping(value = "qPrivateinfo.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String qPrivateinfo(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws Exception {
+		QuestionParam param = getActionParam(request);
+		return serviceManager.getQAccountInfo(param);
+	}
 	
 	/*
 	 * 车来了宣布活动无效！
@@ -219,6 +240,20 @@ public class QueryAction extends AbstractController {
 
 		return publishDataService.sendFinishMsg();
 	}
+	
+	/*
+	 * 车来了宣布活动恢复！
+	 */
+	@ResponseBody
+	@RequestMapping(value = "restart.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String restart(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws Exception {
+
+		logger.info("车来了宣布活动归来！！ ");
+
+		return publishDataService.sendRestartMsg();
+	}
+	
 
 	/*
 	 * test

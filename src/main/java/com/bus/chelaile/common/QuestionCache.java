@@ -38,17 +38,19 @@ public class QuestionCache {
 		questionStatus.setQuestionS(0);
 		
 		QuestionCache.updateQuestionStatus(activityId, questionStatus);
-		
-		if(questionStatus.getQuestionN() == 0) {
-			Object realiveO = CacheUtil.getPubClientNumber();
-			int realLive = 0;
-			if(realiveO != null) {
-				realLive = Integer.parseInt((String)CacheUtil.getPubClientNumber());
-			}
-			
-			logger.info("获取到的实际链接数是：realLive={}", realLive);
-			StaticService.updateAnswerDataFromLivePeople(realLive, activityId, true);
-		}
+
+		// 第一题发送题目后，将可答题人数设置为在线人人数(主要是继承机器人数)
+//		if(questionStatus.getQuestionN() == 0) {
+//			logger.info("设置可答题人数");
+//			Object realiveO = CacheUtil.getPubClientNumber();
+//			int realLive = 0;
+//			if(realiveO != null) {
+//				realLive = Integer.parseInt((String)CacheUtil.getPubClientNumber());
+//			}
+//			
+//			logger.info("获取到的实际链接数是：realLive={}", realLive);
+//			StaticService.updateAnswerDataFromLivePeople(realLive, activityId);
+//		}
 	}
 
 
@@ -61,14 +63,32 @@ public class QuestionCache {
 
 
 	// 收集答案进队列， 供后续消费分析
-	public static String getAnswerLogListKey(int subjectId) {
-		return new StringBuilder("QUESTION_ANSWERLOG#").append(subjectId).toString();
+	public static String getAnswerLogListKey(int questionStatusN, int activityId) {
+//		return new StringBuilder("QUESTION_ANSWERLOG#").append(subjectId).toString();
+		return new StringBuilder("DT#").append(activityId).append("#").append(questionStatusN).toString();
 	}
+	
 	
 	public static String getAnswerLogListField(String accountId) {
-		return new StringBuilder("QUESTION_ANSWERLOG#ACCOUNT#").append(accountId).toString();
+//		return new StringBuilder("QUESTION_ANSWERLOG#ACCOUNT#").append(accountId).toString();
+		return accountId;
 	}
 	
+	// 提交试卷的key
+	public static String getPeopleJJKey(int activityId, int questionStatusN) {
+		return new StringBuilder("JJSX#").append(activityId).append("#").append(questionStatusN).toString();
+	}
+	
+	// 阅卷 总数据
+	public static String getYJKey(int activityId, int questionStatusN) {
+		return new StringBuilder("YJ#").append(activityId).append("#").append(questionStatusN).toString();
+	}
+	public static String getYJRobotKey(int activityId, int questionStatusN) {
+		return new StringBuilder("YJRO#").append(activityId).append("#").append(questionStatusN).toString();
+	}
+	public static String getYJTotalKey(int activityId, int questionStatusN) {
+		return new StringBuilder("YJT#").append(activityId).append("#").append(questionStatusN).toString();
+	}
 
 	 // 存储邀请码对应用户的关系
 	public static String getCodeCacheKey(String code) {
@@ -76,9 +96,9 @@ public class QuestionCache {
 	}
 	
 	// 存储每道题结束后答对的人
-	public static String getLivePeoPleKey(int activityId, int questionN) {
-		return new StringBuilder("QUESTION_LIVEPEOPLE#").append(activityId).append("#").append(questionN).toString();
-	}
+//	public static String getLivePeoPleKey(int activityId, int questionN) {
+//		return new StringBuilder("QUESTION_LIVEPEOPLE#").append(activityId).append("#").append(questionN).toString();
+//	}
 	
 	// 记录用户当前活动的状态
 	// 包括：生死、答至第几题、可否继续使用复活卡
@@ -118,6 +138,21 @@ public class QuestionCache {
 			return info;
 		}
 	}
+	
+	// 获取用户信息
+		// 包括：复活卡数目
+		public static AccountInfo getQAccountInfo(String aid) {
+			String key = "QUESTION_ACCOUNTINFO#" + aid;
+			String value = (String) CacheUtil.getFromRedis(key);
+			if(StringUtils.isNoneBlank(value)) {
+				return JSONObject.parseObject(value, AccountInfo.class);
+			} else {
+//				logger.info("新用户第一次参加活动！ , accountId={}", aid);
+//				AccountInfo info = new AccountInfo(aid);
+//				updateAccountInfo(aid, info);
+				return null;
+			}
+		}
 
 	public static void updateAccountInfo(String aid, AccountInfo aInfo) {
 		String key = "QUESTION_ACCOUNTINFO#" + aid;
@@ -140,6 +175,7 @@ public class QuestionCache {
 			return false;
 		}
 		if (aInfo != null && aInfo.getCardNum() > 0) {
+			// TODO 
 			aInfo.reduceOne();
 			if(isUpdate)
 				QuestionCache.updateAccountInfo(aid, aInfo);
@@ -154,21 +190,51 @@ public class QuestionCache {
 		return CODE_CREATE_KEY;
 	}
 	
-	public static AnswerData getAnsweData(int activityId, int questionStatusN) {
-		String key = activityId + "#" + questionStatusN;
-		String value = (String) CacheUtil.getFromRedis(key);
+	/*
+	 * 答题总数据
+	 */
+	public static AnswerData getAnsweData(int activityId, int questionN) {
 		
-		if(StringUtils.isNoneBlank(value)) {
-			return JSONObject.parseObject(value, AnswerData.class);
-		} else {
-			AnswerData answerData = new AnswerData();;
-			return answerData;
-		}
+		String YJkey = QuestionCache.getYJKey(activityId, questionN);
+		String YJRobotKey = QuestionCache.getYJRobotKey(activityId, questionN);
+		String YJTotalKey = QuestionCache.getYJTotalKey(activityId, questionN);
+		
+		AnswerData answerData = new AnswerData();
+		answerData.createFromRedis(YJkey, YJRobotKey, YJTotalKey);
+		if(StaticService.ORDER_SUBJECT.containsKey(questionN))
+			answerData.setSubjectId(StaticService.ORDER_SUBJECT.get(questionN));
+		return answerData;
 	}
 	
-	public static void setAnsweData(int activityId, int questionStatusN, AnswerData data) {
-		String key = activityId + "#" + questionStatusN;
-		
-		CacheUtil.setToRedis(key, -1, JSONObject.toJSONString(data));
+//	public static void setAnsweData(int activityId, int questionStatusN, AnswerData data) {
+//		String key = "QUESTIONANSWERDATA#" + activityId + "#" + questionStatusN;
+//		
+//		CacheUtil.setToRedis(key, -1, JSONObject.toJSONString(data));
+//	}
+
+
+	/**
+	 * 存储用户每一步的状况
+	 * @param accountId
+	 * @return
+	 */
+	public static String getAccountAnswerLogKey(int activityId, String accountId) {
+//		return new StringBuilder("ACCOUNT_ANSWERLOG#").append(activityId).append("#").append(accountId).toString();
+		return new StringBuilder("UDT#").append(activityId).append("#").append(accountId).toString();
+	}
+
+	// 每题下来，存活的用户
+	public static String getLiveKey(int activityId, int qN) {
+		return new StringBuilder("CH#").append(activityId).append("#").append(qN).toString();
+	}
+
+	// 总连接数
+	public static String getTotalLiveKey(Integer activityId) {
+		return new StringBuilder("ZLJS#").append(activityId).toString();
+	}
+
+	// 用户唯一答案key
+	public static String getAnswerKey(String accountId, int questionId) {
+		return new StringBuilder("WYDA#").append(accountId).append("#").append(questionId).toString();
 	}
 }

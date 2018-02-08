@@ -95,8 +95,8 @@ public class CacheUtil {
 		return redisClient.get(key);
 	}
 
-	public static void incrToCache(String key, int exp) {
-		redisClient.IncValue(key, exp);
+	public static long incrToCache(String key, int exp) {
+		return redisClient.IncValue(key, exp);
 	}
 
 	public static void redisDelete(String key) {
@@ -178,6 +178,23 @@ public class CacheUtil {
 	public static void pushMoney(String key, String value) {
 		redisPay.lpush(key, value);
 	}
+	
+	public static void addHashSetValue(String yJkey, String field, int j) {
+		redisClient.addHashSetValue(yJkey, field, j);
+		
+	}
+	
+	public static void saddMembers(String key, String members) {
+		redisClient.sadd(key, members);
+	}
+	
+	public static Set<String> sdiff(String key1, String key2) {
+		return redisClient.sdiff(key1, key2);
+	}
+	
+	public static Set<String> getSet(String key) {
+		return redisClient.getSet(key);
+	}
 
 	public static void main(String[] args) throws InterruptedException {
 		initClient();
@@ -204,4 +221,5 @@ public class CacheUtil {
 		Set<String> ends = getRevRangeSet("wuli_hot", 0L, 1513067900290L, 20); // 历史
 		System.out.println(ends);
 	}
+
 }

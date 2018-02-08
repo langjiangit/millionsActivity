@@ -53,16 +53,16 @@ public class PayRedisCacheImplUtil implements ICache {
 
 		// config.setMaxWait(2000000);
 		// config.setMaxWaitMillis();
-		config.setTestWhileIdle(true);
-		config.setTestOnBorrow(true);
-		config.setTestOnReturn(true);
+//		config.setTestWhileIdle(true);
+//		config.setTestOnBorrow(true);
+//		config.setTestOnReturn(true);
 
-		System.out.println("***** 支付 redis初始化， redis info , host=" + host + ", port=" + port + ", database=" + database + ", password=" + password);
 
-		// TODO
-		// host = "127.0.0.1";port=6379;
+		//
+//		host="121.41.23.113";port=6379;database=7;password="gr8Q39DO3pIszMJU";
 		pool = new JedisPool(config, host, port, 2000, password, database);
 
+		System.out.println("***** 支付 redis初始化， redis info , host=" + host + ", port=" + port + ", database=" + database + ", password=" + password);
 		log.info("RedisCacheImplUtil init success,ip={},host={}, password={}, database={}",
 				host, port, password, database);
 	}
@@ -873,6 +873,24 @@ public class PayRedisCacheImplUtil implements ICache {
 				pool.returnResource(conn);
 		}
 		return value;
+	}
+
+	@Override
+	public void addHashSetValue(String yJkey, String field, int j) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void sadd(String key, String members) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Set<String> sdiff(String s1, String s2) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
