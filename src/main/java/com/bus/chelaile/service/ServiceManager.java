@@ -18,7 +18,6 @@ import com.bus.chelaile.common.CacheUtil;
 import com.bus.chelaile.common.Constants;
 import com.bus.chelaile.common.QuestionCache;
 import com.bus.chelaile.model.AnswerData;
-import com.bus.chelaile.model.AnswerLog;
 import com.bus.chelaile.model.Answer_activity;
 import com.bus.chelaile.model.Answer_subject;
 import com.bus.chelaile.model.ActivityStatus;
@@ -116,7 +115,7 @@ public class ServiceManager {
 			}
 			QuestionCache.addPubQuestion(questionStatus, question.getActivityId());
 			// 多线程阅卷
-			int c=4;
+			int c=40;
 			final CountDownLatch latch = new CountDownLatch(c);
 			for(int i = 0;i < c; i ++) {
 				 exec.schedule(new CalculateAnswerThread(subjectId, questionStatus, question.getActivityId(),i,latch),
@@ -136,34 +135,21 @@ public class ServiceManager {
 	 */
 	public String answerQuestion(QuestionParam param) {
 
-		int questionId = param.getSubjectId();
-		Answer_subject subject = StaticService.getSubject(questionId);
-		long startTime = subject.getEffectStartTime();
-		long endTime = subject.getEffectEndTime();
 		
+		// 保证收题的速度，逻辑都去掉
 		Answer_activity activity = StaticService.getNowOrNextActivity();
 		ActivityStatus questionStatus = QuestionCache.getQuestionStatus(activity.getActivityId());
 
-		if (System.currentTimeMillis() > endTime || System.currentTimeMillis() < startTime) {
-			logger.info("提交答案超时， accountId={}, subjectId={}", param.getAccountId(), param.getSubjectId());
-			return getClientErrMap("已经超时啦", Constants.STATUS_FUNCTION_NOT_ENABLED);
-		}
+//		int questionId = param.getSubjectId();
+//		Answer_subject subject = StaticService.getSubject(questionId);
+//		long startTime = subject.getEffectStartTime();
+//		long endTime = subject.getEffectEndTime();
+//		if (System.currentTimeMillis() > endTime || System.currentTimeMillis() < startTime) {
+//			logger.info("提交答案超时， accountId={}, subjectId={}", param.getAccountId(), param.getSubjectId());
+//			return getClientErrMap("已经超时啦", Constants.STATUS_FUNCTION_NOT_ENABLED);
+//		}
 		exec.execute(new PushAnswerLogThread(param, questionStatus.getQuestionN(), activity.getActivityId()));
 
-//		AnswerLog answerLog = new AnswerLog(param);
-//		String DTkey = QuestionCache.getAnswerLogListKey(questionStatus.getQuestionN(), activity.getActivityId());
-//		String field = param.getAccountId();;
-//		
-////		logger.info("单独收卷！key={},field={},answerLog={}", DTkey, field, JSONObject.toJSONString(answerLog));	
-//		CacheUtil.setHashSetValue(DTkey, field, JSONObject.toJSONString(answerLog));
-//		
-//		String answerK = QuestionCache.getAnswerKey(param.getAccountId(), answerLog.getQuestionId());
-//		if (CacheUtil.incrToCache(answerK, -1) == 1) {
-//			String dtPersonK = QuestionCache.getPeopleJJKey(activity.getActivityId(), questionStatus.getQuestionN());
-//			CacheUtil.lPush(dtPersonK, param.getAccountId());
-//		} else {
-//			logger.info("重复提交答案，拒绝入队列, accountId={}, subjectId={}", param.getAccountId(), answerLog.getQuestionId());
-//		}
 		
 		return getClienSucMap(new JSONObject(), Constants.STATUS_REQUEST_SUCCESS);
 	}
@@ -184,7 +170,7 @@ public class ServiceManager {
 		ActivityStatus questionStatus = QuestionCache.getQuestionStatus(activity.getActivityId());
 		JSONObject responseJ = new JSONObject();
 		AnswerData answerData = QuestionCache.getAnsweData(activity.getActivityId(), questionStatus.getQuestionN());
-		responseJ.put("canChanged", 1);
+		responseJ.put("canChanged", 0);
 		if (questionStatus.hasToCalculated()) {
 			logger.info("开始计算， questionStatus={}", JSONObject.toJSONString(questionStatus));
 
@@ -200,10 +186,8 @@ public class ServiceManager {
 			questionStatus.setQuestionS(2);
 			QuestionCache.updateQuestionStatus(activity.getActivityId(), questionStatus);
 		} else if (questionStatus.hasCalculated()) {
-			// 计算完毕，修改数据阶段
-//			AnswerData nextAnswerData = QuestionCache.getAnsweData(activity.getActivityId(),
-//					questionStatus.getQuestionN() + 1);
 			answerData.copyFromLastData(activity.getActivityId(), questionStatus.getQuestionN());
+			responseJ.put("canChanged", 1);
 //			QuestionCache.setAnsweData(activity.getActivityId(), questionStatus.getQuestionN() + 1, nextAnswerData);
 		} else if (!questionStatus.hasCalculated()) { // !=2 的情况，都不可以修改
 			responseJ.put("canChanged", 0);
@@ -407,19 +391,18 @@ public class ServiceManager {
 		// 根据时间，获取当前进行的活动
 		Answer_activity activity = StaticService.getNowOrNextActivity();
 		if (activity == null) {
-			// logger.error("初始化房间的时候，未能找到活动信息");
 			return getClientErrMap("当前活动未开启~", "05");
 		}
 
-		// String totalLiveKey =
-		// QuestionCache.getTotalLiveKey(activity.getActivityId());
 		int totalLive = 0;
 		try {
-			// int totalLive = Integer.parseInt((String)
-			// CacheUtil.getFromRedis(totalLiveKey));
-			int questionN = QuestionCache.getQuestionStatus(activity.getActivityId()).getQuestionN();
-			String YJTotalKey = QuestionCache.getYJTotalKey(activity.getActivityId(), questionN);
-			totalLive = getInt(CacheUtil.getHashSetValue(YJTotalKey, "7"));
+			// 在线人数，彻底修改来源，不再从 YJ 中获取了。单独的 key 
+//			int questionN = QuestionCache.getQuestionStatus(activity.getActivityId()).getQuestionN();
+//			String YJTotalKey = QuestionCache.getYJTotalKey(activity.getActivityId(), questionN);
+//			totalLive = getInt(CacheUtil.getHashSetValue(YJTotalKey, "7"));
+			String zxKey = QuestionCache.getZXKey();
+			totalLive = getInt((String) CacheUtil.getFromRedis(zxKey));
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -460,12 +443,12 @@ public class ServiceManager {
 			return getClienSucMap("无效的邀请码", Constants.STATUS_PARAM_ERROR);
 		}
 
-		AccountInfo authorAccount = QuestionCache.getAccountInfo(param.getAccountId());
+		AccountInfo authorAccount = QuestionCache.getAccountInfo(param.getAccountId(), true);
 		if (authorAccount.getCanFillCode() == 0) {
 			logger.info("不再允许填写邀请码了, accountId={}", param.getAccountId());
 			return getClienSucMap("不再允许填写邀请码了", Constants.STATUS_PARAM_ERROR);
 		}
-		AccountInfo incrAccount = QuestionCache.getAccountInfo(accountId);
+		AccountInfo incrAccount = QuestionCache.getAccountInfo(accountId, true);
 
 		if (accountId.equals(param.getAccountId())) {
 			return getClienSucMap("不能填写自己的邀请码", Constants.STATUS_PARAM_ERROR);
@@ -487,7 +470,7 @@ public class ServiceManager {
 	public String getAccountInfo(QuestionParam param) {
 		JSONObject json = new JSONObject();
 		if (StringUtils.isNoneBlank(param.getAccountId())) {
-			AccountInfo accInfo = QuestionCache.getAccountInfo(param.getAccountId());
+			AccountInfo accInfo = QuestionCache.getAccountInfo(param.getAccountId(), true);
 			json.put("relive", accInfo.getCardNum()); // 用户复活卡数量
 			json.put("inviteCode", accInfo.getInviteCode());
 			json.put("canFillCode", accInfo.getCanFillCode());
@@ -539,5 +522,47 @@ public class ServiceManager {
 			System.out.println("都不是");
 			break;
 		}
+	}
+
+	/*
+	 * 修改第一题的总可答题人数(机器人数)
+	 */
+	public String changeFirstAnswerNum(int totalAnswerNum) {
+		Answer_activity activity = StaticService.getNowOrNextActivity();
+		String YJRobotKey = QuestionCache.getYJRobotKey(activity.getActivityId(), 0);
+		CacheUtil.setHashSetValue(YJRobotKey, "6", totalAnswerNum + "");
+		
+		String YJRobotKey1 = QuestionCache.getYJRobotKey(activity.getActivityId(), -1);
+		CacheUtil.setHashSetValue(YJRobotKey1, "6", totalAnswerNum + "");
+		
+		return getClienSucMap(new JSONObject(), Constants.STATUS_REQUEST_SUCCESS);
+	}
+
+	/*
+	 * 修改在线人数
+	 */
+	public String changeOnlineNum(int totalAnswerNum) {
+//		Answer_activity activity = StaticService.getNowOrNextActivity();
+//		if (activity != null) {
+			String zxKey = QuestionCache.getZXKey();
+			CacheUtil.setToRedis(zxKey, -1, totalAnswerNum + "");
+//		} else {
+//			return getClientErrMap("当前没有活动在进行", Constants.STATUS_REQUEST_SUCCESS);
+//		}
+		return getClienSucMap(new JSONObject(), Constants.STATUS_REQUEST_SUCCESS);
+	}
+
+	/*
+	 * 查询真实的在线人数
+	 */
+	public String getOnlineNum() {
+		Object realiveO = CacheUtil.getPubClientNumber();
+		int realLive = 0;
+		if (realiveO != null) {
+			realLive = Integer.parseInt((String) CacheUtil.getPubClientNumber());
+		}
+		JSONObject j = new JSONObject();
+		j.put("onlineNum", realLive);
+		return getClienSucMap(j, Constants.STATUS_REQUEST_SUCCESS);
 	}
 }

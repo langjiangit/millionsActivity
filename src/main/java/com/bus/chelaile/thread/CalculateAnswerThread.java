@@ -67,6 +67,7 @@ public class CalculateAnswerThread implements Runnable {
             		logger.error("pop error ", e);
             		continue;
             	}
+            	long tb = System.currentTimeMillis();
             	
             	try {
             		String answerLogStr = allAnswers.get(accountId);
@@ -74,21 +75,45 @@ public class CalculateAnswerThread implements Runnable {
             			logger.error("answerLogStr为空 ");
             			continue;
             		}
-
             		AnswerLog answer = JSONObject.parseObject(answerLogStr, AnswerLog.class);
+            		logger.info("accountId={},  costTime1={}", accountId, System.currentTimeMillis() - tb);
+            		
+            		// 超时判断
+					Answer_subject subject = StaticService.getSubject(subjectId);
+					long startTime = subject.getEffectStartTime();
+					long endTime = subject.getEffectEndTime();
+					if (answer.getpTime() > endTime || answer.getpTime() < startTime) {
+						logger.info("提交答案超时， accountId={}, subjectId={}", accountId, subjectId);
+						continue;
+					}
 
             		String answerK = QuestionCache.getAnswerKey(accountId, answer.getQuestionId());
             		if (CacheUtil.incrToCache(answerK, -1) != 1) {
             			logger.info("重复提交答案，拒绝入队列, accountId={}, subjectId={}", accountId, answer.getQuestionId());
             			continue;
             		}
-            		
+            		logger.info("accountId={},  costTime2={}", accountId, System.currentTimeMillis() - tb);
             		// -11 未答，死了, -1 答错，死了,
             		// 0 未知(做活着处理)
             		// 1 答对，活着, 2 答错，活者 (使用复活卡), 12 未答，活着 (使用复活卡)
             		int userStatus = 0;
             		String UDTKey = QuestionCache.getAccountAnswerLogKey(activityId, accountId);
             		boolean canUseCard = canUsedCard(UDTKey, accountId);
+            		logger.info("accountId={},  costTime3={}", accountId, System.currentTimeMillis() - tb);
+            		
+            		// 阅卷前判断用户是否有资格
+            		String lastUserStatus = CacheUtil.getHashSetValue(UDTKey, String.valueOf(qN - 1));
+            		if(lastUserStatus == null) {
+            			if(qN > 0) {
+            				logger.info("用户没有资格继续答题:上一题UDT状态为空, accountId{}, qN={}, lastUserSatus={}", accountId, qN, lastUserStatus);
+            				continue;
+            			}
+            		} else {
+            			if(getInt(lastUserStatus) < 0) {
+            				logger.info("用户没有资格继续答题:上一题UDT状态为不可继续答题, accountId{}, qN={}, lastUserSatus={}", accountId, qN, lastUserStatus);
+            				continue;
+            			}
+            		}
 
             		if (answer.getpAnswer() == rightAnswer) { // 答对
             			userStatus = 1;
@@ -103,6 +128,7 @@ public class CalculateAnswerThread implements Runnable {
             				userStatus = -1;
             			}
             		}
+            		logger.info("accountId={},  costTime4={}", accountId, System.currentTimeMillis() - tb);
             		switch (answer.getpAnswer()) {
             		case 0:
             			CacheUtil.addHashSetValue(YJkey, "1", 1);
@@ -126,6 +152,7 @@ public class CalculateAnswerThread implements Runnable {
             		logger.error("阅卷出错 ", e);
             		continue;
             	}
+            	logger.info("accountId={},  costTime={}", accountId, System.currentTimeMillis() - tb);
             }
         } catch (Exception e1) {
             logger.error("CalculateAnswerThread.while(true)", e1);
@@ -356,5 +383,16 @@ public class CalculateAnswerThread implements Runnable {
 
 	public void setActivityId(int activityId) {
 		this.activityId = activityId;
+	}
+	
+	private int getInt(String hashSetValue) {
+		if (hashSetValue == null)
+			return 0;
+		try {
+			return Integer.parseInt(hashSetValue);
+		} catch (Exception e) {
+			logger.error("从redis获取整型数出错， value={}", hashSetValue, e);
+			return 0;
+		}
 	}
 }

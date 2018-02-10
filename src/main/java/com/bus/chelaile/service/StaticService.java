@@ -128,17 +128,6 @@ public class StaticService {
 	}
 
 
-//	/**
-//	 * 
-//	 * @param activityId
-//	 * @param questionStatusN
-//	 * @param option1RealNum
-//	 * @param option2RealNum
-//	 * @param option3RealNum
-//	 * @param noAnswerRealNum
-//	 * @param usedCardReadNum
-//	 * @param outRealNum
-//	 */
 //	public static void updateAnswerData(int activityId, int questionStatusN, 
 //			int option1RealNum, int option2RealNum, int option3RealNum, 
 //			int noAnswerRealNum, int usedCardReadNum, int outRealNum) {
@@ -160,30 +149,6 @@ public class StaticService {
 //	}
 
 
-	/*
-	 * 根据长连接，更新在线人数
-	 */
-	
-//	public static int updateAnswerDataFromLivePeople(int realLive, int activityId) {
-//		// 查询当前 答题活动状态
-//		ActivityStatus questionStatus = QuestionCache.getQuestionStatus(activityId);
-//		Answer_activity activity = ALL_ACTIVITIES.get(activityId);
-//		AnswerData answerData = QuestionCache.getAnsweData(activityId, questionStatus.getQuestionN());
-////		logger.info("更新前的答题数据为：{}", JSONObject.toJSON(answerData));
-//
-//		answerData.updateWatchLiving(realLive, activity.getRobotMultiple());
-//		if (questionStatus.getQuestionN() == 0) {
-//			logger.info("第一题，设置可答题人数等于在线人数");
-//			answerData.copyAnswerFromWatch();
-//		}
-//
-////		logger.info("更新后的答题数据为：{}", JSONObject.toJSON(answerData));
-////		String key = activityId + "#" + questionStatus.getQuestionN();
-////		ANSWER_DATAS.put(key, answerData);
-//		QuestionCache.setAnsweData(activityId, questionStatus.getQuestionN(), answerData);
-//
-//		return answerData.getWatchLiving().getTotal().get();
-//	}
 
 	/*
 	 * 获取当前进行的活动

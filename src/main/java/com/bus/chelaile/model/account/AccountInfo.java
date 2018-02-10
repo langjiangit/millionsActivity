@@ -55,11 +55,13 @@ public class AccountInfo {
 		super();
 	}
 	
-	public AccountInfo(String aid) {
+	public AccountInfo(String aid, boolean isCreateCard) {
 		super();
 		this.accountId = aid;
-		this.inviteCode = createCode(aid);
-		logger.info("生成邀请码, inviteCode={}", this.inviteCode);
+		if(isCreateCard) {
+			this.inviteCode = createCode(aid);
+			logger.info("生成邀请码, inviteCode={}", this.inviteCode);
+		}
 		// 初始化， 设置复活卡，并存入缓存，复活卡作为key，用户id作为value
 		
 	}

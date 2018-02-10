@@ -5,35 +5,55 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSONObject;
 import com.bus.chelaile.model.Answer_activity;
+import com.bus.chelaile.model.PropertiesName;
 import com.bus.chelaile.mvc.QuestionParam;
 import com.bus.chelaile.mvc.model.ActivityInfo;
 import com.bus.chelaile.util.DateUtil;
+import com.bus.chelaile.util.config.PropertiesUtils;
 
 public class ActivityService {
 
 	Logger logger = LoggerFactory.getLogger(ActivityService.class);
-
+	private static final int MAX_ONLINE = Integer.parseInt(PropertiesUtils.getValue(PropertiesName.CACHE.getValue(),
+			"max.online.num", "510000"));
+	private static boolean HASCHANGEDNUM = false;
+	
 	/**
 	 * 初始化获取房间信息
 	 * 
 	 * @param param
 	 * @return
 	 */
-	public Object getRoomInfo(QuestionParam param, Answer_activity activity, int totaoLive) {
-
+	public Object getRoomInfo(QuestionParam param, Answer_activity activity, int totalLive) {
+		// 校验总人数
+//		totalLive = check(totalLive);
+		
 		JSONObject json = new JSONObject();
 		json.put("mcName", "小车君");
 		json.put("profilePhoto", "https://image3.chelaile.net.cn/748355e296cd4f4d814f6b4e80207799");
 
 		json.put("activityId", activity.getActivityId());
-		// TODO 没有正在进行的活动，是否开放入口
 		json.put("isLive", activity.getIsonLive());
 		json.put("money", activity.getTotalBonus());
-		json.put("onlineNum", totaoLive);
+		json.put("onlineNum", totalLive);
 		
 		return json;
 	}
 	
+
+	/*
+	 * 出现过一次负数，就启动兜底策略
+	 */
+//	private int check(int totalLive) {
+//		if (totalLive >= 0 && !HASCHANGEDNUM) {
+//			return totalLive;
+//		} else {
+//			HASCHANGEDNUM = true; // 修改过一次之后，后面保持这个数
+//			logger.info("人数为负，需要调整……  ");
+//			return (int) (MAX_ONLINE + (2000 * Math.random()));
+//		}
+//	}
+
 
 	/**
 	 * 获取活动信息

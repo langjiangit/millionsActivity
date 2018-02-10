@@ -39,18 +39,6 @@ public class QuestionCache {
 		
 		QuestionCache.updateQuestionStatus(activityId, questionStatus);
 
-		// 第一题发送题目后，将可答题人数设置为在线人人数(主要是继承机器人数)
-//		if(questionStatus.getQuestionN() == 0) {
-//			logger.info("设置可答题人数");
-//			Object realiveO = CacheUtil.getPubClientNumber();
-//			int realLive = 0;
-//			if(realiveO != null) {
-//				realLive = Integer.parseInt((String)CacheUtil.getPubClientNumber());
-//			}
-//			
-//			logger.info("获取到的实际链接数是：realLive={}", realLive);
-//			StaticService.updateAnswerDataFromLivePeople(realLive, activityId);
-//		}
 	}
 
 
@@ -89,6 +77,11 @@ public class QuestionCache {
 	public static String getYJTotalKey(int activityId, int questionStatusN) {
 		return new StringBuilder("YJT#").append(activityId).append("#").append(questionStatusN).toString();
 	}
+	
+	// 在线人数
+	public static String getZXKey() {
+		return new StringBuilder("ZX#").toString();
+	}
 
 	 // 存储邀请码对应用户的关系
 	public static String getCodeCacheKey(String code) {
@@ -126,15 +119,16 @@ public class QuestionCache {
 	
 	// 获取用户信息
 	// 包括：复活卡数目
-	public static AccountInfo getAccountInfo(String aid) {
+	public static AccountInfo getAccountInfo(String aid, boolean isCreateCard) {
 		String key = "QUESTION_ACCOUNTINFO#" + aid;
 		String value = (String) CacheUtil.getFromRedis(key);
 		if(StringUtils.isNoneBlank(value)) {
 			return JSONObject.parseObject(value, AccountInfo.class);
 		} else {
 			logger.info("新用户第一次参加活动！ , accountId={}", aid);
-			AccountInfo info = new AccountInfo(aid);
-			updateAccountInfo(aid, info);
+			AccountInfo info = new AccountInfo(aid, isCreateCard);
+			// TODO 
+//			updateAccountInfo(aid, info);
 			return info;
 		}
 	}
@@ -169,7 +163,7 @@ public class QuestionCache {
 	 * @return
 	 */
 	public static boolean useCard(String aid, boolean isCanUsedCard, boolean isUpdate) {
-		AccountInfo aInfo = QuestionCache.getAccountInfo(aid);
+		AccountInfo aInfo = QuestionCache.getAccountInfo(aid, false);
 		if (!isCanUsedCard) {
 			logger.info("不能够使用复活卡, accountId={}", aid);
 			return false;

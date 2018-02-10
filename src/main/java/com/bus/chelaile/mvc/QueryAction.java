@@ -17,6 +17,7 @@ import com.bus.chelaile.model.account.AccountInfo;
 import com.bus.chelaile.service.PublishDataService;
 import com.bus.chelaile.service.ServiceManager;
 import com.bus.chelaile.service.StartService;
+import com.bus.chelaile.service.StaticService;
 
 @Controller
 @RequestMapping("v1")
@@ -106,6 +107,14 @@ public class QueryAction extends AbstractController {
 			return "";
 		}
 	}
+	@ResponseBody
+    @RequestMapping(value = "yuanxiangupdate.action", produces = "Content-Type=text/plain;charset=UTF-8")
+    public String yuanxiangupdate(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+            throws Exception {
+	    String subjectId=request.getParameter("subjectId");
+	    StaticService.SENDED_SUBJECT.remove(Integer.parseInt(subjectId));
+	    return "{\"success\":\"00\"}";
+    }
 
 	/*
 	 * 上传答案
@@ -116,8 +125,8 @@ public class QueryAction extends AbstractController {
 			throws Exception {
 
 		QuestionParam param = getActionParam(request);
-		System.out.println("上传答案, accountId=" + param.getAccountId() + ", subjectId=" + param.getSubjectId()
-				+ ", answer=" + param.getAnswer());
+//		System.out.println("上传答案, accountId=" + param.getAccountId() + ", subjectId=" + param.getSubjectId()
+//				+ ", answer=" + param.getAnswer());
 		logger.info("上传答案, accountId={}, udid={}, subjectId={}, answer={}", param.getAccountId(), param.getUdid(),
 				param.getSubjectId(), param.getAnswer());
 
@@ -201,7 +210,7 @@ public class QueryAction extends AbstractController {
 		int codeNum = getInt(request, "codeNum");
 		logger.info("设置复活码数目：accountId={}, codeNum={}", param.getAccountId(), codeNum);
 		
-		AccountInfo accountInfo = QuestionCache.getAccountInfo(param.getAccountId());
+		AccountInfo accountInfo = QuestionCache.getAccountInfo(param.getAccountId(), true);
 		accountInfo.setCardNum(codeNum);
 		QuestionCache.updateAccountInfo(param.getAccountId(), accountInfo);
 		
@@ -226,6 +235,39 @@ public class QueryAction extends AbstractController {
 			throws Exception {
 		QuestionParam param = getActionParam(request);
 		return serviceManager.getQAccountInfo(param);
+	}
+	
+	/**
+	 * 设置第一题的可答题总人数
+	 * @param request
+	 * @param response
+	 * @param session
+	 * @return
+	 * @throws Exception
+	 */
+	@ResponseBody
+	@RequestMapping(value = "changeFirstAnswerNum.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String changeFirstAnswerNum(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws Exception {
+		int totalAnswerNum = getInt(request, "firstAnswerNum");
+		return serviceManager.changeFirstAnswerNum(totalAnswerNum);
+	}
+	
+	// 修改在线人数
+	@ResponseBody
+	@RequestMapping(value = "changeOnlineNum.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String changeOnlineNum(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws Exception {
+		int totalAnswerNum = getInt(request, "onlineNum");
+		return serviceManager.changeOnlineNum(totalAnswerNum);
+	}
+	
+	// 查询真实在线人数
+	@ResponseBody
+	@RequestMapping(value = "queryOnlineNum.action", produces = "Content-Type=text/plain;charset=UTF-8")
+	public String queryOnlineNum(HttpServletRequest request, HttpServletResponse response, HttpSession session)
+			throws Exception {
+		return serviceManager.getOnlineNum();
 	}
 	
 	/*

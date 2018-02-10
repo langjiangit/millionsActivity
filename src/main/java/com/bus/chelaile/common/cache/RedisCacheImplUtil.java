@@ -725,7 +725,7 @@ public class RedisCacheImplUtil implements ICache {
 
 			log.debug("Redis-Hset: Key={}, field={}, value={}", key, field, result);
 		} catch (Exception e) {
-			log.error("Error occur in Redis.Hset, key={}, error message: {}", key, e.getMessage());
+			log.error("Error occur in Redis.Hset, key={}, field={}, value={}, error message: {}", key, field, result, e.getMessage());
 			if (pool != null && conn != null) {
 				pool.returnResource(conn);
 				pool = null;

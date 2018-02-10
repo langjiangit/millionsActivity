@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.bus.chelaile.common.CacheUtil;
+import com.bus.chelaile.common.Constants;
 import com.bus.chelaile.dao.ActivityMapper;
 import com.bus.chelaile.dao.QuestionMapper;
 import com.bus.chelaile.model.Answer_activity;
@@ -35,7 +36,8 @@ public class StartService {
 		List<Answer_activity> allActivities = activityMapper.listValidActivities();
 		List<Answer_subject> allQuestions = questionMapper.listValidQuestions();
 		
-		System.out.println("查询结束, 活动有" + allActivities.size() + "个，题目有" + allQuestions.size() + " 个");
+		logger.info("查询结束, 活动有{}个，题目有{}个", allActivities.size(), allQuestions.size());
+//		System.out.println("查询结束, 活动有" + allActivities.size() + "个，题目有" + allQuestions.size() + " 个");
 		List<String> titles = New.arrayList();
 		
 		for(Answer_activity activity : allActivities) {
@@ -46,11 +48,12 @@ public class StartService {
 		}
 		
 		// 启动任务，定时更新在线人数（真实人数、机器人、总人数）
-		// TODO 
-		Answer_activity activity = StaticService.getNowOrNextActivity();
-		if (activity != null) {
-			UpdateWathing updateW = new UpdateWathing(activity.getActivityId(), activity.getRobotMultiple());
-			exec.scheduleWithFixedDelay(updateW, 10, 10, TimeUnit.SECONDS);
+		if (Constants.IS_SEDN_MACHINE) {	// 一台机器做这个工作即可
+			Answer_activity activity = StaticService.getNowOrNextActivity();
+			if (activity != null) {
+				UpdateWathing updateW = new UpdateWathing(activity.getActivityId(), activity.getRobotMultiple());
+				exec.scheduleWithFixedDelay(updateW, 10, 10, TimeUnit.SECONDS);
+			}
 		}
 		return titles;
 	}
