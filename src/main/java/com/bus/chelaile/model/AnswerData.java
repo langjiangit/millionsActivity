@@ -111,18 +111,18 @@ public class AnswerData {
 			if (subject.getAnswer() == 0) {
 //				this.rightOptionNum.getTotal().set(this.option1Num.getTotal().get());
 //				this.rightOptionNum.getRobotNum().set(this.option1Num.getRobotNum().get());
-				CacheUtil.setHashSetValue(YJRobotKey, "5", CacheUtil.getHashSetValue(YJRobotKey, "1"));
-				CacheUtil.setHashSetValue(YJTotalKey, "5", CacheUtil.getHashSetValue(YJTotalKey, "1"));
+				CacheUtil.setHashSetValue(YJRobotKey, "5", getInt(CacheUtil.getHashSetValue(YJRobotKey, "1")) + "");
+				CacheUtil.setHashSetValue(YJTotalKey, "5", getInt(CacheUtil.getHashSetValue(YJTotalKey, "1")) + "");
 			} else if (subject.getAnswer() == 1) {
 //				this.rightOptionNum.getTotal().set(this.option2Num.getTotal().get());
 //				this.rightOptionNum.getRobotNum().set(this.option2Num.getRobotNum().get());
-				CacheUtil.setHashSetValue(YJRobotKey, "5", CacheUtil.getHashSetValue(YJRobotKey, "2"));
-				CacheUtil.setHashSetValue(YJTotalKey, "5", CacheUtil.getHashSetValue(YJTotalKey, "2"));
+				CacheUtil.setHashSetValue(YJRobotKey, "5", getInt(CacheUtil.getHashSetValue(YJRobotKey, "2")) + "");
+				CacheUtil.setHashSetValue(YJTotalKey, "5", getInt(CacheUtil.getHashSetValue(YJTotalKey, "2")) + "");
 			} else if (subject.getAnswer() == 2) {
 //				this.rightOptionNum.getTotal().set(this.option3Num.getTotal().get());
 //				this.rightOptionNum.getRobotNum().set(this.option3Num.getRobotNum().get());
-				CacheUtil.setHashSetValue(YJRobotKey, "5", CacheUtil.getHashSetValue(YJRobotKey, "3"));
-				CacheUtil.setHashSetValue(YJTotalKey, "5", CacheUtil.getHashSetValue(YJTotalKey, "3"));
+				CacheUtil.setHashSetValue(YJRobotKey, "5", getInt(CacheUtil.getHashSetValue(YJRobotKey, "3")) + "");
+				CacheUtil.setHashSetValue(YJTotalKey, "5", getInt(CacheUtil.getHashSetValue(YJTotalKey, "3")) + "");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

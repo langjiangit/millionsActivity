@@ -21,6 +21,7 @@ import com.bus.chelaile.model.AnswerData;
 import com.bus.chelaile.model.Answer_activity;
 import com.bus.chelaile.model.Answer_subject;
 import com.bus.chelaile.model.ActivityStatus;
+import com.bus.chelaile.model.PropertiesName;
 import com.bus.chelaile.model.account.AccountActivityStatus;
 import com.bus.chelaile.model.account.AccountInfo;
 import com.bus.chelaile.model.client.JsonStr;
@@ -31,6 +32,7 @@ import com.bus.chelaile.thread.CalculateAnswerThread;
 import com.bus.chelaile.thread.PushAnswerLogThread;
 import com.bus.chelaile.util.DateUtil;
 import com.bus.chelaile.util.New;
+import com.bus.chelaile.util.config.PropertiesUtils;
 
 public class ServiceManager {
 	@Autowired
@@ -40,7 +42,10 @@ public class ServiceManager {
 	@Autowired
 	private ActivityService activityService;
 
-	private static final ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(10);
+	private static final int THREAD_COUNT = Integer.parseInt(PropertiesUtils.getValue(PropertiesName.PUBLIC.getValue(),
+			"thread.count", "10"));
+	private static final ScheduledThreadPoolExecutor exec = new ScheduledThreadPoolExecutor(Integer.parseInt(PropertiesUtils.getValue(PropertiesName.PUBLIC.getValue(),
+			"thread.count", "10")));
 
 	protected static final Logger logger = LoggerFactory.getLogger(ServiceManager.class);
 
@@ -114,11 +119,15 @@ public class ServiceManager {
 				getClientErrMap("发题失败 , 题目是：" + question.getSubject(), Constants.STATUS_INTERNAL_ERROR);
 			}
 			QuestionCache.addPubQuestion(questionStatus, question.getActivityId());
+			
+//			// 所有试卷的map集合
+			
 			// 多线程阅卷
-			int c=40;
+			int c=THREAD_COUNT;
 			final CountDownLatch latch = new CountDownLatch(c);
 			for(int i = 0;i < c; i ++) {
-				 exec.schedule(new CalculateAnswerThread(subjectId, questionStatus, question.getActivityId(),i,latch),
+				 exec.schedule(new CalculateAnswerThread(subjectId, questionStatus, 
+						 question.getActivityId(),i,latch),
 					StaticService.EFFECTIVE_TIME, TimeUnit.MILLISECONDS);
 			}
 		}

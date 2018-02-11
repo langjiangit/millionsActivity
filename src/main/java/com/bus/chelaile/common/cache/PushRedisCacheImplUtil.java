@@ -845,4 +845,10 @@ public class PushRedisCacheImplUtil implements ICache {
 		return null;
 	}
 
+	@Override
+	public Set<String> getHKeys(String key) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

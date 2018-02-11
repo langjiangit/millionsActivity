@@ -27,6 +27,7 @@ import com.bus.chelaile.util.config.PropertiesUtils;
 
 
 
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -249,6 +250,12 @@ public class OCSCacheUtil implements ICache{
 
 	@Override
 	public Set<String> sdiff(String s1, String s2) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Set<String> getHKeys(String key) {
 		// TODO Auto-generated method stub
 		return null;
 	}

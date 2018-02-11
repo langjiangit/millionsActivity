@@ -738,6 +738,31 @@ public class RedisCacheImplUtil implements ICache {
 		return result;
 	}
 	
+	
+	public Set<String> getHKeys(String key) {
+		JedisPool pool = null;
+		Jedis conn = null;
+		Set<String> result = null;
+		try {
+			pool = getPool();
+			conn = pool.getResource();
+			result = conn.hkeys(key);
+
+			log.debug("Redis-Hkeys: Key={}", key);
+		} catch (Exception e) {
+			log.error("Error occur in Redis.Hset, key={}, error message: {}", key, e.getMessage());
+			if (pool != null && conn != null) {
+				pool.returnResource(conn);
+				pool = null;
+				conn = null;
+			}
+		} finally {
+			if (pool != null && conn != null)
+				pool.returnResource(conn);
+		}
+		return result;
+	}
+	
 	public void addHashSetValue(String key, String field, int value) {
 		JedisPool pool = null;
 		Jedis conn = null;

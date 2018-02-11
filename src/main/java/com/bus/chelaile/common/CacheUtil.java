@@ -195,6 +195,10 @@ public class CacheUtil {
 	public static Set<String> getSet(String key) {
 		return redisClient.getSet(key);
 	}
+	
+	public static Set<String> getHKeys(String key) {
+		return redisClient.getHKeys(key);
+	}
 
 	public static void main(String[] args) throws InterruptedException {
 		initClient();

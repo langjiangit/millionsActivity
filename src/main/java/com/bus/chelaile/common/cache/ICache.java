@@ -48,4 +48,6 @@ public interface ICache {
 	void sadd(String key, String members);
 
 	Set<String> sdiff(String s1, String s2);
+
+	public Set<String> getHKeys(String key);
 }

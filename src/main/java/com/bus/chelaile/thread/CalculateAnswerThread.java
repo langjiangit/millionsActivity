@@ -1,6 +1,5 @@
 package com.bus.chelaile.thread;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
@@ -22,14 +21,17 @@ public class CalculateAnswerThread implements Runnable {
 	private int activityId;
     private CountDownLatch cntLatch;
     int                    num    = -1;
+//    private Map<String, String> allAnswers;
 	Logger logger = LoggerFactory.getLogger(CalculateAnswerThread.class);
 
-	public CalculateAnswerThread(int subjectId, ActivityStatus questionStatus, int activityId,int num,CountDownLatch cntLatch) {
+	public CalculateAnswerThread(int subjectId, ActivityStatus questionStatus, int activityId,int num,
+			CountDownLatch cntLatch) {
 		this.subjectId = subjectId;
 		this.questionStatus = questionStatus;
 		this.activityId = activityId;
 		this.num=num;
 		this.cntLatch=cntLatch;
+//		this.allAnswers = allAnswers;
 	}
 
 	/**
@@ -38,16 +40,14 @@ public class CalculateAnswerThread implements Runnable {
 	 */
 	@Override
 	public void run() {
-		logger.info("开始阅卷！ , questionStatus=", JSONObject.toJSONString(questionStatus));
+		logger.info("开始阅卷！ , questionStatus={}", JSONObject.toJSONString(questionStatus));
 		int qN = questionStatus.getQuestionN();
 		Answer_subject answerSubject = StaticService.getSubject(subjectId);
 		int rightAnswer = answerSubject.getAnswer();
 		
 //		String livePeopleKey = QuestionCache.getLivePeoPleKey(activityId, qN);
-		
-		// 所有试卷的map集合
 		String DTkey = QuestionCache.getAnswerLogListKey(qN, activityId);
-		Map<String, String> allAnswers = CacheUtil.getHsetAll(DTkey);
+//		Map<String, String> allAnswers = CacheUtil.getHsetAll(DTkey);
 		
 		// field ，  1 选1人数， 2 选2人数， 3选3人数， 4 使用复活卡人数， 5 选正确人数， -1 未作答人数
 		String YJkey = QuestionCache.getYJKey(activityId, qN);
@@ -70,7 +70,8 @@ public class CalculateAnswerThread implements Runnable {
             	long tb = System.currentTimeMillis();
             	
             	try {
-            		String answerLogStr = allAnswers.get(accountId);
+//            		String answerLogStr = allAnswers.get(accountId);
+            		String answerLogStr = CacheUtil.getHashSetValue(DTkey, accountId);
             		if (answerLogStr == null) {
             			logger.error("answerLogStr为空 ");
             			continue;
@@ -165,6 +166,7 @@ public class CalculateAnswerThread implements Runnable {
         if (num == 0) {
             try {
                 logger.info("活动{} 题目一{} num{} await",activityId,qN,num);
+                // 等待所有线程计算完毕
                 cntLatch.await();
             } catch (InterruptedException e) {
                 logger.error("cntLatch.await ", e);
@@ -175,7 +177,8 @@ public class CalculateAnswerThread implements Runnable {
                 Set<String> lastLiveP = CacheUtil.getSet(lastLiveKey);
                 Set<String> notAnswers = New.hashSet();
                 notAnswers.addAll(lastLiveP);
-                notAnswers.removeAll(allAnswers.keySet());
+//                notAnswers.removeAll(allAnswers.keySet());
+                notAnswers.removeAll(CacheUtil.getHKeys(DTkey));
                 logger.info("获取到未作答人数, questionN={}, notanswerPN={}", qN, notAnswers.size());
 
                 for (String aId : notAnswers) {
@@ -192,162 +195,12 @@ public class CalculateAnswerThread implements Runnable {
                     }
                 }
             }
+            
+            logger.info("阅卷结束最终！,  questionStatus={}", JSONObject.toJSONString(questionStatus));
+            questionStatus.setQuestionS(1);
+            QuestionCache.updateQuestionStatus(answerSubject.getActivityId(), questionStatus);
         }
-		
-
-//		if(allAnswers != null) {
-//			for(Entry<String, String> entry : allAnswers.entrySet()) {
-//				String answerLogStr = entry.getValue();
-//				if (answerLogStr == null) {
-//					logger.info("answerLogStr为空，异常退出 ");
-//					break;
-//				}
-////				while (true) {
-//				// 取试卷
-////				String answerLogStr = CacheUtil.lpop(key);
-//				AnswerLog answer = JSONObject.parseObject(answerLogStr, AnswerLog.class);
-//
-//				// 用户答题状态记录
-//				String accountId = answer.getAccountId();
-//				AccountActivityStatus accountStatus = QuestionCache.getAccountStatus(accountId, activityId);
-//				logger.info("阅卷前用户答题状态: accountId={}, accountStatus={}", answer.getAccountId(), accountStatus);
-//				logger.info("取到试卷：accountId={}, answerLogStr={}", accountId, answerLogStr);
-//				
-//				// 之前没有找到答题记录，那么必须从第一题开始，否则作废
-//				if (accountStatus == null) {
-//					if (questionStatus.getQuestionN() == 0) {
-//						accountStatus = new AccountActivityStatus();  // 初始化用户的答题状态
-//						accountStatus.setAnswerOrder(answer.getpAnswer());
-//						if (answer.getpAnswer() == rightAnswer) { // 答对
-//							logger.info("第一题，答对， accountId={}", answer.getAccountId());
-//							accountStatus.setRAnswer(true);
-//							accountStatus.setLive(true);
-//							accountStatus.setCanUsedCard(true);
-//							accountStatus.setOrder(0);
-//						} else { // 答错
-//							logger.info("第一题，答错， accountId={}", answer.getAccountId());
-//							accountStatus.setRAnswer(false);
-//							accountStatus.setLive(QuestionCache.useCard(accountId, true, true)); // 根据是否可以使用复活卡，决定生死
-//							accountStatus.setCanUsedCard(false); // 不再能够使用复活卡了
-//							accountStatus.setOrder(0);
-//						}
-//					} else {
-//						logger.info("accountId={}，当前进行到第{}题，用户还没有过答题记录：用户错过了第一题！", accountId,
-//								questionStatus.getQuestionN());
-//						return;
-////						continue;
-//					}
-//				}
-//
-//				else if(! accountStatus.isLive()) {
-//					logger.error("出现已经挂掉的用户答题的情况： accountId={}, accountStatus={}", accountId, accountStatus);
-//					return;
-////					continue;
-//				}
-//				
-//				/** 之前有答题记录 **/
-//
-//				// 超过两题未答
-//				else if (answerSubject.getRealOrder() - accountStatus.getOrder() > 2) {
-//					// order 不做改动
-//					// TODO 
-//					accountStatus.setRAnswer(answer.getpAnswer() == rightAnswer);
-//					accountStatus.setRAnswer(false);
-//					accountStatus.setLive(false);
-//					accountStatus.setCanUsedCard(false);
-//					accountStatus.setAnswerOrder(-1);
-//					logger.error("(连续断网两题才会发生的情况, 如果连续不答题，不会走到这里[最新改动，连续两次未答题也不会走到这里，"
-//							+ "初始化房间的时候，会进行生死查询，用户已经不可能再提交答案了]) accountId={}，当前进行到第{}题，用户只答到第{}题，用户错过了两题以上！", accountId,
-//							questionStatus.getQuestionN(), accountStatus.getOrder());
-//				}
-//
-//				// 有一题未答
-//				else if (answerSubject.getRealOrder() - accountStatus.getOrder() == 2) {
-//					accountStatus.setLive(QuestionCache.useCard(accountId, accountStatus.isCanUsedCard(), true)); // 使用复活卡
-//					accountStatus.setCanUsedCard(false);
-//					if(accountStatus.isLive()) { // 漏题结账后，还活着，看当前这一题答对否
-//						accountStatus.setRAnswer(answer.getpAnswer() == rightAnswer);
-//						accountStatus.setLive(accountStatus.isRAnswer());
-//						accountStatus.setOrder(answerSubject.getRealOrder());
-//						accountStatus.setAnswerOrder(answer.getpAnswer());
-//					} else {
-//						// 用户挂掉了
-//						logger.error("如果初始化查询生死正确，用户也不会走到这一步！ accountId={}, questionStatus={}", 
-//								accountId, JSONObject.toJSONString(questionStatus));
-//						accountStatus.setRAnswer(false);
-//						accountStatus.setAnswerOrder(-1);
-//					}
-//					logger.info("accountId={}，当前进行到第{}题，用户只答到第{}题，用户错过了某一题！", accountId, questionStatus.getQuestionN(),
-//							accountStatus.getOrder());
-//				}
-//
-//				// 正常情况挨个答题
-//				else if (answer.getpAnswer() == rightAnswer) { // 答对
-//					accountStatus.setRAnswer(true);
-//					accountStatus.setLive(true);
-//					accountStatus.setOrder(answerSubject.getRealOrder());
-//					accountStatus.setAnswerOrder(answer.getpAnswer());
-//				} else if (answer.getpAnswer() != rightAnswer) { // 答错
-//					accountStatus.setRAnswer(false);
-//					accountStatus.setLive(QuestionCache.useCard(accountId, accountStatus.isCanUsedCard(), true));
-//					accountStatus.setCanUsedCard(false);
-//					accountStatus.setOrder(answerSubject.getRealOrder());
-//					accountStatus.setAnswerOrder(answer.getpAnswer());
-//				} else {
-//					logger.error("遇到未考虑的情况， accountId={}", accountId);
-//				}
-//
-//				// 更新用户的答题状态
-//				QuestionCache.updateAccountStatus(accountId, accountStatus, activityId);
-//				
-//				// 更新答题总数据
-//				// 改成： 循环阅卷完毕后，统一更新。因为涉及到多台服务器之间的冲突问题
-//				switch (answer.getpAnswer()) {
-//				case 0:
-//					option1RealNum++;
-//					break;
-//				case 1:
-//					option2RealNum++;
-//					break;
-//				case 2:
-//					option3RealNum++;
-//					break;
-//				default:
-//					noAnswerRealNum++;
-//					break;
-//				}
-//				if (accountStatus.isLive() && !accountStatus.isRAnswer())
-//					usedCardReadNum++;
-//				if (!accountStatus.isLive())
-//					outRealNum++;
-//				
-//				// 记录答对题目的人
-//				if(accountStatus.isLive()) {
-//					CacheUtil.setHashSetValue(livePeopleKey, accountId, "1");
-//				}
-//				
-//				// 记录用户的答题记录状况
-//				String accountKey = QuestionCache.getAccountAnswerLogKey(activityId, accountId);
-//				AccountLog accountLog = new AccountLog();
-//				AccountInfo aInfo = QuestionCache.getAccountInfo(accountId);
-//				
-//				accountLog.setAnswerLog(answer);
-//				accountLog.setCardNum(aInfo.getCardNum());
-//				accountLog.setLive(accountStatus.isLive());
-//				accountLog.setRAnswer(accountStatus.isRAnswer());
-//				accountLog.setCanUsedCard(accountStatus.isCanUsedCard());
-//				CacheUtil.setHashSetValue(accountKey, String.valueOf(questionStatus.getQuestionN()), JSONObject.toJSONString(accountLog));
-//			}
-//		}
-//
-//		StaticService.updateAnswerData(activityId, questionStatus.getQuestionN(), option1RealNum, option2RealNum, option3RealNum, 
-//				noAnswerRealNum, usedCardReadNum, outRealNum);
-				
-				
-		logger.info("阅卷结束！ ");
-		System.out.println("阅卷结束！ " + ", questionStatus=" + JSONObject.toJSONString(questionStatus));
-		questionStatus.setQuestionS(1);
-		QuestionCache.updateQuestionStatus(answerSubject.getActivityId(), questionStatus);
+        logger.info("单个线程阅卷结束！ ");
 
 	}
 
