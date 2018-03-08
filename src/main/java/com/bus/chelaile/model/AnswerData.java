@@ -74,53 +74,28 @@ public class AnswerData {
 			double C = (double) option3R / (double) totalAnswerR;
 			double D = (double) notAnswerR / (double) totalAnswerR;
 
-//			double E = (double) realOutNum / (double) realAnswerNum; // 出局人数占比,用来同步出局机器人和出局总人数
-			// this.answerNum.getRealNum().set((this.watchLiving.getRealNum().get()));
-			// this.answerNum.getRobotNum().set((this.watchLiving.getRobotNum().get()));
-			// this.answerNum.getTotal().set((this.watchLiving.getTotal().get()));
-//			this.option1Num.getRobotNum().set((int) (robotAnswerNum * A));
 			CacheUtil.setHashSetValue(YJRobotKey, "1", Math.round(robotAnswerNum * A) + "");
-//			this.option2Num.getRobotNum().set((int) (robotAnswerNum * B));
 			CacheUtil.setHashSetValue(YJRobotKey, "2", Math.round(robotAnswerNum * B) + "");
-//			this.option3Num.getRobotNum().set((int) (robotAnswerNum * C));
 			CacheUtil.setHashSetValue(YJRobotKey, "3", Math.round(robotAnswerNum * C) + "");
-//			this.notAnswer.getRobotNum().set((int) (robotAnswerNum * D));
 			CacheUtil.setHashSetValue(YJRobotKey, "-1", Math.round(robotAnswerNum * D) + "");
-//			this.outPeople.getRobotNum().set((int) (robotAnswerNum * E));
 
-//			this.option1Num.getTotal().set((int) (totalAnswerNum * A));
 			CacheUtil.setHashSetValue(YJTotalKey, "1", Math.round(totalAnswerNum * A) + "");
-//			this.option2Num.getTotal().set((int) (totalAnswerNum * B));
 			CacheUtil.setHashSetValue(YJTotalKey, "2", Math.round(totalAnswerNum * B) + "");
-//			this.option3Num.getTotal().set((int) (totalAnswerNum * C));
 			CacheUtil.setHashSetValue(YJTotalKey, "3", Math.round(totalAnswerNum * C) + "");
-//			this.notAnswer.getTotal().set((int) (totalAnswerNum * D));
 			CacheUtil.setHashSetValue(YJTotalKey, "-1", Math.round(totalAnswerNum * D) + "");
-//			this.outPeople.getTotal().set((int) (totalAnswerNum * E));
 
-//			this.notAnswer.getRealNum().set(realNoAnswer);
-
-//			this.reLive.getRobotNum().set(this.reLive.getRealNum().get() * robotMultiple);
 			CacheUtil.setHashSetValue(YJRobotKey, "4", reliveR * robotMultiple + "");
-//			this.reLive.getTotal().set(this.reLive.getRobotNum().get() + this.reLive.getRealNum().get());
 			CacheUtil.setHashSetValue(YJTotalKey, "4", reliveR * (robotMultiple + 1) + "");
 
 			// 记录 ‘这一题答对的人的情况’ ,跟随正确选项即可
-//			this.setSubjectId(StaticService.getSubjectId(questionN));
 			Answer_subject subject = StaticService.getSubject(subjectId);
 			if (subject.getAnswer() == 0) {
-//				this.rightOptionNum.getTotal().set(this.option1Num.getTotal().get());
-//				this.rightOptionNum.getRobotNum().set(this.option1Num.getRobotNum().get());
 				CacheUtil.setHashSetValue(YJRobotKey, "5", getInt(CacheUtil.getHashSetValue(YJRobotKey, "1")) + "");
 				CacheUtil.setHashSetValue(YJTotalKey, "5", getInt(CacheUtil.getHashSetValue(YJTotalKey, "1")) + "");
 			} else if (subject.getAnswer() == 1) {
-//				this.rightOptionNum.getTotal().set(this.option2Num.getTotal().get());
-//				this.rightOptionNum.getRobotNum().set(this.option2Num.getRobotNum().get());
 				CacheUtil.setHashSetValue(YJRobotKey, "5", getInt(CacheUtil.getHashSetValue(YJRobotKey, "2")) + "");
 				CacheUtil.setHashSetValue(YJTotalKey, "5", getInt(CacheUtil.getHashSetValue(YJTotalKey, "2")) + "");
 			} else if (subject.getAnswer() == 2) {
-//				this.rightOptionNum.getTotal().set(this.option3Num.getTotal().get());
-//				this.rightOptionNum.getRobotNum().set(this.option3Num.getRobotNum().get());
 				CacheUtil.setHashSetValue(YJRobotKey, "5", getInt(CacheUtil.getHashSetValue(YJRobotKey, "3")) + "");
 				CacheUtil.setHashSetValue(YJTotalKey, "5", getInt(CacheUtil.getHashSetValue(YJTotalKey, "3")) + "");
 			}
@@ -186,17 +161,6 @@ public class AnswerData {
 	 * 
 	 * @param answerData
 	 */
-//	public void copyFromLastData(AnswerData answerData) {
-//		this.watchLiving = answerData.watchLiving;
-//
-//		this.answerNum.getRealNum().set(
-//				answerData.getRightOptionNum().getRealNum().get() + answerData.getReLive().getRealNum().get());
-//		this.answerNum.getRobotNum().set(
-//				answerData.getRightOptionNum().getRobotNum().get() + answerData.getReLive().getRobotNum().get());
-//		this.answerNum.getTotal().set(
-//				answerData.getRightOptionNum().getTotal().get() + answerData.getReLive().getTotal().get());
-//	}
-	
 	public void copyFromLastData(Integer activityId, int questionN) {
 		String YJkey = QuestionCache.getYJKey(activityId, questionN);
 		String YJRobotKey = QuestionCache.getYJRobotKey(activityId, questionN);
@@ -230,74 +194,51 @@ public class AnswerData {
 		if (watchingRobot != -1) {
 			CacheUtil.setHashSetValue(YJRobotKey, "7", watchingRobot + "");
 			CacheUtil.setHashSetValue(YJTotalKey, "7", (watchingRobot + getInt(CacheUtil.getHashSetValue(YJKey, "7"))) + "");
-//			this.watchLiving.getRobotNum().set(this.watchLiving.getRobotNum().get() + watchingRobot);
-//			this.watchLiving.getTotal().set(this.watchLiving.getTotal().get() + watchingRobot);
 		}
 		if (option1Robot != -1) {
 			CacheUtil.setHashSetValue(YJRobotKey, "1", option1Robot + "");
 			CacheUtil.setHashSetValue(YJTotalKey, "1", (option1Robot + getInt(CacheUtil.getHashSetValue(YJKey, "1"))) + "");
-//			this.option1Num.getRobotNum().set(this.option1Num.getRobotNum().get() + option1Robot);
-//			this.option1Num.getTotal().set(this.option1Num.getTotal().get() + option1Robot);
 			if(rightAnswer == 0)
 				rightRobot = option1Robot;
 		}
 		if (option2Robot != -1) {
 			CacheUtil.setHashSetValue(YJRobotKey, "2", option2Robot + "");
 			CacheUtil.setHashSetValue(YJTotalKey, "2", (option2Robot + getInt(CacheUtil.getHashSetValue(YJKey, "2"))) + "");
-//			this.option2Num.getRobotNum().set(this.option2Num.getRobotNum().get() + option2Robot);
-//			this.option2Num.getTotal().set(this.option2Num.getTotal().get() + option2Robot);
 			if(rightAnswer == 1)
 				rightRobot = option2Robot;
 		}
 		if (option3Robot != -1) {
 			CacheUtil.setHashSetValue(YJRobotKey, "3", option3Robot + "");
 			CacheUtil.setHashSetValue(YJTotalKey, "3", (option3Robot + getInt(CacheUtil.getHashSetValue(YJKey, "3"))) + "");
-//			this.option3Num.getRobotNum().set(this.option3Num.getRobotNum().get() + option3Robot);
-//			this.option3Num.getTotal().set(this.option3Num.getTotal().get() + option3Robot);
 			if(rightAnswer == 2)
 				rightRobot = option3Robot;
 		}
 		if (notAnsRobot != -1) {
 			CacheUtil.setHashSetValue(YJRobotKey, "-1", notAnsRobot + "");
 			CacheUtil.setHashSetValue(YJTotalKey, "-1", (notAnsRobot + getInt(CacheUtil.getHashSetValue(YJKey, "-1"))) + "");
-//			this.notAnswer.getRobotNum().set(this.notAnswer.getRobotNum().get() + notAnsRobot);
-//			this.notAnswer.getTotal().set(this.notAnswer.getTotal().get() + notAnsRobot);
 		}
 		
 		
 		if (reLivingRobot != -1) {
 			CacheUtil.setHashSetValue(YJRobotKey, "4", reLivingRobot + "");
 			CacheUtil.setHashSetValue(YJTotalKey, "4", (reLivingRobot + getInt(CacheUtil.getHashSetValue(YJKey, "4"))) + "");
-//			this.reLive.getRobotNum().set(this.reLive.getRobotNum().get() + reLivingRobot);
-//			this.reLive.getTotal().set(this.reLive.getTotal().get() + reLivingRobot);
 		
 			// 可答题人数，直接受复活人数+ right answer people
 			CacheUtil.setHashSetValue(YJRobotKey, "6", (reLivingRobot + rightRobot) + "");
 			CacheUtil.setHashSetValue(YJTotalKey, "6", (reLivingRobot + getInt(CacheUtil.getHashSetValue(YJKey, "4"))
 					+ rightRobot + getInt(CacheUtil.getHashSetValue(YJKey, "5"))) + "");
-//			this.answerNum.getRobotNum().set(this.answerNum.getRobotNum().get() + reLivingRobot + rightRobot);
-//			this.answerNum.getTotal().set(this.answerNum.getTotal().get() + reLivingRobot + rightRobot);
 		}
 		
 		
 		if(rightAnswer == 0) {
 			CacheUtil.setHashSetValue(YJRobotKey, "5", option1Robot + "");
 			CacheUtil.setHashSetValue(YJTotalKey, "5", (option1Robot + getInt(CacheUtil.getHashSetValue(YJKey, "1"))) + "");
-//			this.rightOptionNum.getTotal().set(this.option1Num.getTotal().get());
-//			this.rightOptionNum.getRealNum().set(this.option1Num.getRealNum().get());
-//			this.rightOptionNum.getRobotNum().set(this.option1Num.getRobotNum().get());
 		} else if(rightAnswer == 1) {
 			CacheUtil.setHashSetValue(YJRobotKey, "5", option2Robot + "");
 			CacheUtil.setHashSetValue(YJTotalKey, "5", (option2Robot + getInt(CacheUtil.getHashSetValue(YJKey, "2"))) + "");
-//			this.rightOptionNum.getTotal().set(this.option2Num.getTotal().get());
-//			this.rightOptionNum.getRealNum().set(this.option2Num.getRealNum().get());
-//			this.rightOptionNum.getRobotNum().set(this.option2Num.getRobotNum().get());
 		} else if(rightAnswer == 2) {
 			CacheUtil.setHashSetValue(YJRobotKey, "5", option3Robot + "");
 			CacheUtil.setHashSetValue(YJTotalKey, "5", (option3Robot + getInt(CacheUtil.getHashSetValue(YJKey, "3"))) + "");
-//			this.rightOptionNum.getTotal().set(this.option3Num.getTotal().get());
-//			this.rightOptionNum.getRealNum().set(this.option3Num.getRealNum().get());
-//			this.rightOptionNum.getRobotNum().set(this.option3Num.getRobotNum().get());
 		}
 		
 		// 将修改复制到下一题的初始化数据中

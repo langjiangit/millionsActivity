@@ -67,7 +67,7 @@ public class CalculateAnswerThread implements Runnable {
             		logger.error("pop error ", e);
             		continue;
             	}
-//            	long tb = System.currentTimeMillis();
+            	long tb = System.currentTimeMillis();
             	
             	try {
 //            		String answerLogStr = allAnswers.get(accountId);
@@ -77,7 +77,7 @@ public class CalculateAnswerThread implements Runnable {
             			continue;
             		}
             		AnswerLog answer = JSONObject.parseObject(answerLogStr, AnswerLog.class);
-//            		logger.info("accountId={},  costTime1={}", accountId, System.currentTimeMillis() - tb);
+            		logger.info("accountId={},  costTime1={}", accountId, System.currentTimeMillis() - tb);
             		
             		// 超时判断
 					Answer_subject subject = StaticService.getSubject(subjectId);
@@ -93,25 +93,25 @@ public class CalculateAnswerThread implements Runnable {
             			logger.info("重复提交答案，拒绝入队列, accountId={}, subjectId={}", accountId, answer.getQuestionId());
             			continue;
             		}
-//            		logger.info("accountId={},  costTime2={}", accountId, System.currentTimeMillis() - tb);
+            		logger.info("accountId={},  costTime2={}", accountId, System.currentTimeMillis() - tb);
             		// -11 未答，死了, -1 答错，死了,
             		// 0 未知(做活着处理)
             		// 1 答对，活着, 2 答错，活者 (使用复活卡), 12 未答，活着 (使用复活卡)
             		int userStatus = 0;
             		String UDTKey = QuestionCache.getAccountAnswerLogKey(activityId, accountId);
             		boolean canUseCard = canUsedCard(UDTKey, accountId);
-//            		logger.info("accountId={},  costTime3={}", accountId, System.currentTimeMillis() - tb);
+            		logger.info("accountId={},  costTime3={}", accountId, System.currentTimeMillis() - tb);
             		
             		// 阅卷前判断用户是否有资格
             		String lastUserStatus = CacheUtil.getHashSetValue(UDTKey, String.valueOf(qN - 1));
             		if(lastUserStatus == null) {
             			if(qN > 0) {
-//            				logger.info("用户没有资格继续答题:上一题UDT状态为空, accountId{}, qN={}, lastUserSatus={}", accountId, qN, lastUserStatus);
+            				logger.info("用户没有资格继续答题:上一题UDT状态为空, accountId{}, qN={}, lastUserSatus={}", accountId, qN, lastUserStatus);
             				continue;
             			}
             		} else {
             			if(getInt(lastUserStatus) < 0) {
-//            				logger.info("用户没有资格继续答题:上一题UDT状态为不可继续答题, accountId{}, qN={}, lastUserSatus={}", accountId, qN, lastUserStatus);
+            				logger.info("用户没有资格继续答题:上一题UDT状态为不可继续答题, accountId{}, qN={}, lastUserSatus={}", accountId, qN, lastUserStatus);
             				continue;
             			}
             		}
@@ -120,7 +120,7 @@ public class CalculateAnswerThread implements Runnable {
             			userStatus = 1;
             			CacheUtil.addHashSetValue(YJkey, "5", 1);
             		} else { // 答错
-//            			logger.info("答错， accountId={}", answer.getAccountId());
+            			logger.info("第一题，答错， accountId={}", answer.getAccountId());
             			if (QuestionCache.useCard(accountId, canUseCard, true)) {
             				userStatus = 2;
             				CacheUtil.addHashSetValue(YJkey, "4", 1);
@@ -129,7 +129,7 @@ public class CalculateAnswerThread implements Runnable {
             				userStatus = -1;
             			}
             		}
-//            		logger.info("accountId={},  costTime4={}", accountId, System.currentTimeMillis() - tb);
+            		logger.info("accountId={},  costTime4={}", accountId, System.currentTimeMillis() - tb);
             		switch (answer.getpAnswer()) {
             		case 0:
             			CacheUtil.addHashSetValue(YJkey, "1", 1);
@@ -153,7 +153,7 @@ public class CalculateAnswerThread implements Runnable {
             		logger.error("阅卷出错 ", e);
             		continue;
             	}
-//            	logger.info("accountId={},  costTime={}", accountId, System.currentTimeMillis() - tb);
+            	logger.info("accountId={},  costTime={}", accountId, System.currentTimeMillis() - tb);
             }
         } catch (Exception e1) {
             logger.error("CalculateAnswerThread.while(true)", e1);

@@ -399,9 +399,9 @@ public class ServiceManager {
 	public String queryRoomInfo(QuestionParam param) {
 		// 根据时间，获取当前进行的活动
 		Answer_activity activity = StaticService.getNowOrNextActivity();
-//		if (activity == null) {
-//			return getClientErrMap("当前活动未开启~", "05");
-//		}
+		if (activity == null) {
+			return getClientErrMap("当前活动未开启~", "05");
+		}
 
 		int totalLive = 0;
 		try {

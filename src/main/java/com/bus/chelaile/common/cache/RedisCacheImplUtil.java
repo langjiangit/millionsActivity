@@ -54,7 +54,7 @@ public class RedisCacheImplUtil implements ICache {
 		System.out.println("***** redis初始化， redis info , host=" + host + ", port=" + port);
 
 		// TODO
-		// host = "127.0.0.1";port=6379;
+		host = "127.0.0.1";port=6379;
 		pool = new JedisPool(config, host, port);
 
 		log.info("RedisCacheImplUtil init success,ip={},host={}", host, port);
@@ -787,6 +787,7 @@ public class RedisCacheImplUtil implements ICache {
 		return;
 	}
 
+	
 	@Override
 	public void set(String key, int exp, Object obj) {
 		set(key, (String) obj, exp);

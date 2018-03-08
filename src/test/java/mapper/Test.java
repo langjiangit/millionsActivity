@@ -1,13 +1,9 @@
 package mapper;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.http.client.ClientProtocolException;
-
-import com.alibaba.fastjson.JSONObject;
-import com.bus.chelaile.util.HttpUtils;
 import com.bus.chelaile.util.New;
 
 public class Test {

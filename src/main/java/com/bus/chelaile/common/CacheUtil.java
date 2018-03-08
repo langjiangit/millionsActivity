@@ -53,9 +53,9 @@ public class CacheUtil {
 			return;
 		}
 
-		System.out.println("*********** cacheType=" + cacheType);
 		// TODO
 		 cacheType = "redis";
+		 System.out.println("*********** cacheType=" + cacheType);
 		if (cacheType.equals("redis")) {
 			client = new RedisCacheImplUtil();
 			System.out.println("redis cache");

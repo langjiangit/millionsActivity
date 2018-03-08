@@ -32,11 +32,9 @@ public class ActivityService {
 		json.put("mcName", "小车君");
 		json.put("profilePhoto", "https://image3.chelaile.net.cn/748355e296cd4f4d814f6b4e80207799");
 
-		if (activity != null) {
-			json.put("activityId", activity.getActivityId());
-			json.put("isLive", activity.getIsonLive());
-			json.put("money", activity.getTotalBonus());
-		}
+		json.put("activityId", activity.getActivityId());
+		json.put("isLive", activity.getIsonLive());
+		json.put("money", activity.getTotalBonus());
 		json.put("onlineNum", totalLive);
 		
 		return json;
