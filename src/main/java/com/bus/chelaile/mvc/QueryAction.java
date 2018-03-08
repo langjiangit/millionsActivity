@@ -68,7 +68,7 @@ public class QueryAction extends AbstractController {
 			throws Exception {
 
 		QuestionParam param = getActionParam(request);
-		logger.info("用户查询生死状态, accountId={}, udid={}", param.getAccountId(), param.getUdid());
+		logger.info("用户查询生死状态, accountId={}", param.getAccountId());
 
 		return serviceManager.queryAccountInfo(param);
 	}
