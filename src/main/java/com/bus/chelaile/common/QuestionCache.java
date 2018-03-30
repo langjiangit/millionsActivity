@@ -128,7 +128,8 @@ public class QuestionCache {
 			logger.info("新用户第一次参加活动！ , accountId={}", aid);
 			AccountInfo info = new AccountInfo(aid, isCreateCard);
 			// TODO 
-//			updateAccountInfo(aid, info);
+			if(isCreateCard)
+				updateAccountInfo(aid, info);
 			return info;
 		}
 	}
